@@ -22,9 +22,6 @@ public class SpringBootJooqExampleApplicationTests {
 	public void findAllTest1() {
 		final CustomerDTO customerDTO = customerRepository.findAll().stream().findFirst().get();
 		assertThat(customerDTO.getId()).isEqualTo(1);
-		assertThat(customerDTO.getName()).isEqualTo("sangwon");
-		assertThat(customerDTO.getEmail()).isEqualTo("sangwon@test.com");
-		assertThat(customerDTO.getProducts()).hasSize(4);
 	}
 	@Test
 	public void findAllTest2() {
@@ -48,7 +45,6 @@ public class SpringBootJooqExampleApplicationTests {
 		customerRepository.save("test", "test@test.com");
 		final CustomerDTO customerDTO = customerRepository.findByname("test").stream().findFirst().get();
 		assertThat(customerDTO.getName()).isEqualTo("test");
-		assertThat(customerDTO.getEmail()).isEqualTo("test@test.com");
 	}
 	@Test
 	public void saveTest2() {
