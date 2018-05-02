@@ -75,7 +75,6 @@ import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 // ...
-// ...
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -118,26 +117,19 @@ public class JDBCUtils {
 
         if (connection != null) {
             try {
-                DatabaseMetaData m = connection.getMetaData();
-
-
-
-
-
-
-
-                String url = m.getURL();
+                DatabaseMetaData aDatabaseMetaData = connection.getMetaData();
+                String url = aDatabaseMetaData.getURL();
                 int majorVersion = 0;
                 int minorVersion = 0;
 
                 // [#6814] Better play safe with JDBC API
                 try {
-                    majorVersion = m.getDatabaseMajorVersion();
+                    majorVersion = aDatabaseMetaData.getDatabaseMajorVersion();
                 }
                 catch (SQLException ignore) {}
 
                 try {
-                    minorVersion = m.getDatabaseMinorVersion();
+                    minorVersion = aDatabaseMetaData.getDatabaseMinorVersion();
                 }
                 catch (SQLException ignore) {}
 
@@ -162,14 +154,6 @@ public class JDBCUtils {
             return dialect;
 
         switch (dialect) {
-
-
-
-
-
-
-
-
             case POSTGRES:
                 return postgresDialect(majorVersion, minorVersion);
             case MYSQL:
@@ -180,45 +164,6 @@ public class JDBCUtils {
 
         return dialect;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static final SQLDialect postgresDialect(int majorVersion, int minorVersion) {
         if (majorVersion < 9)
@@ -262,9 +207,9 @@ public class JDBCUtils {
      * "Guess" the {@link SQLDialect} from a connection URL.
      */
     public static final SQLDialect dialect(String url) {
-        if (url == null)
+        if (url == null) {
             return DEFAULT;
-
+        }
         // The below list might not be accurate or complete. Feel free to
         // contribute fixes related to new / different JDBC driver configurations
 
@@ -272,61 +217,36 @@ public class JDBCUtils {
         //         by inserting their names into the JDBC URL, e.g. jdbc:tc:mysql://...
         //         This is why we no longer check for a URL to start with jdbc:mysql:
         //         but to simply contain :mysql:
-
-
-
-
-
-
-
-
-
-        else if (url.contains(":cubrid:"))
+        else if (url.contains(":cubrid:")) {
             return CUBRID;
-        else if (url.contains(":derby:"))
+        }
+        else if (url.contains(":derby:")) {
             return DERBY;
-        else if (url.contains(":firebirdsql:"))
+        }
+        else if (url.contains(":firebirdsql:")) {
             return FIREBIRD;
-        else if (url.contains(":h2:"))
+        }
+        else if (url.contains(":h2:")) {
             return H2;
-        else if (url.contains(":hsqldb:"))
+        }
+        else if (url.contains(":hsqldb:")) {
             return HSQLDB;
-        else if (url.contains(":mariadb:"))
+        }
+        else if (url.contains(":mariadb:")) {
             return MARIADB;
+        }
         else if (url.contains(":mysql:")
-              || url.contains(":google:"))
+              || url.contains(":google:")) {
             return MYSQL;
+        }
         else if (url.contains(":postgresql:")
-              || url.contains(":pgsql:"))
+              || url.contains(":pgsql:")) {
             return POSTGRES;
+        }
         else if (url.contains(":sqlite:")
-              || url.contains(":sqldroid:"))
+              || url.contains(":sqldroid:")) {
             return SQLITE;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        }
 
         return DEFAULT;
     }
@@ -354,33 +274,6 @@ public class JDBCUtils {
                 return "org.postgresql.Driver";
             case SQLITE:
                 return "org.sqlite.JDBC";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         }
 
         return "java.sql.Driver";
