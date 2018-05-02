@@ -64,6 +64,7 @@ import org.jooq.types.UShort;
 import org.jooq.types.YearToMonth;
 // ...
 // ...
+// ...
 import org.jooq.util.cubrid.CUBRIDDataType;
 // ...
 import org.jooq.util.derby.DerbyDataType;
@@ -82,6 +83,7 @@ import org.jooq.util.sqlite.SQLiteDataType;
 // ...
 // ...
 // ...
+// ...
 
 
 
@@ -96,6 +98,7 @@ import org.jooq.util.sqlite.SQLiteDataType;
  *
  * @author Lukas Eder
  */
+@SuppressWarnings("deprecation")
 public final class SQLDataType {
 
     // -------------------------------------------------------------------------
@@ -579,9 +582,11 @@ public final class SQLDataType {
 
     static {
         // Load all dialect-specific data types
-        // TODO [#650] Make this more reliable using a data type registry
+        // TODO [#5713] Make this more reliable using a data type registry
 
         try {
+
+
 
 
 

@@ -39,6 +39,7 @@ package org.jooq;
 
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
@@ -57,6 +58,7 @@ import static org.jooq.SQLDialect.POSTGRES;
 import static org.jooq.SQLDialect.POSTGRES_9_5;
 // ...
 import static org.jooq.SQLDialect.SQLITE;
+// ...
 // ...
 // ...
 // ...
@@ -9328,7 +9330,7 @@ public interface DSLContext extends Scope , AutoCloseable  {
      *
      * @see DSL#alterIndex(String)
      */
-    @Support({ H2, HSQLDB, POSTGRES })
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     AlterIndexOnStep alterIndex(String index);
 
     /**
@@ -9336,7 +9338,7 @@ public interface DSLContext extends Scope , AutoCloseable  {
      *
      * @see DSL#alterIndex(Name)
      */
-    @Support({ H2, HSQLDB, POSTGRES })
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     AlterIndexOnStep alterIndex(Name index);
 
     /**
@@ -9344,7 +9346,7 @@ public interface DSLContext extends Scope , AutoCloseable  {
      *
      * @see DSL#alterIndex(Name)
      */
-    @Support({ H2, HSQLDB, POSTGRES })
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     AlterIndexOnStep alterIndex(Index index);
 
     /**

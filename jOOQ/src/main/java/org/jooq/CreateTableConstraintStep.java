@@ -44,7 +44,7 @@ import java.util.Collection;
  *
  * @author Lukas Eder
  */
-public interface CreateTableConstraintStep extends CreateTableOnCommitStep {
+public interface CreateTableConstraintStep extends CreateTableIndexStep {
 
     /**
      * Add a constraint to the table.
