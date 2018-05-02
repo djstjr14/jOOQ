@@ -43,6 +43,7 @@ import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.FIREBIRD_3_0;
 import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
@@ -102,7 +103,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB, POSTGRES_9_5 })
     void onConflict(Field<?>... fields);
 
     /**
@@ -114,7 +115,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB, POSTGRES_9_5 })
     void onConflict(Collection<? extends Field<?>> fields);
 
     /**
@@ -122,7 +123,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      * <code>ON CONFLICT ON CONSTRAINT</code> clause in this <code>INSERT</code>
      * statement.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB, POSTGRES_9_5 })
     void onConflictOnConstraint(Constraint constraint);
 
     /**
@@ -130,7 +131,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      * <code>ON CONFLICT ON CONSTRAINT</code> clause in this <code>INSERT</code>
      * statement.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB, POSTGRES_9_5 })
     void onConflictOnConstraint(UniqueKey<R> constraint);
 
     /**
@@ -138,7 +139,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      * <code>ON CONFLICT ON CONSTRAINT</code> clause in this <code>INSERT</code>
      * statement.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB, POSTGRES_9_5 })
     void onConflictOnConstraint(Name constraint);
 
     /**
@@ -154,7 +155,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
     void onDuplicateKeyUpdate(boolean flag);
 
     /**
@@ -218,7 +219,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
     <T> void addValueForUpdate(Field<T> field, T value);
 
     /**
@@ -227,7 +228,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
     <T> void addValueForUpdate(Field<T> field, Field<T> value);
 
     /**
@@ -240,7 +241,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
     void addValuesForUpdate(Map<?, ?> map);
 
     /**
@@ -252,7 +253,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param condition The condition
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, POSTGRES_9_5 })
     void addConditions(Condition condition);
 
     /**
@@ -264,7 +265,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param conditions The condition
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, POSTGRES_9_5 })
     void addConditions(Condition... conditions);
 
     /**
@@ -276,7 +277,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param conditions The condition
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, POSTGRES_9_5 })
     void addConditions(Collection<? extends Condition> conditions);
 
     /**
@@ -288,7 +289,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param condition The condition
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, POSTGRES_9_5 })
     void addConditions(Operator operator, Condition condition);
 
     /**
@@ -300,7 +301,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param conditions The condition
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, POSTGRES_9_5 })
     void addConditions(Operator operator, Condition... conditions);
 
     /**
@@ -312,7 +313,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param conditions The condition
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ CUBRID, POSTGRES_9_5 })
     void addConditions(Operator operator, Collection<? extends Condition> conditions);
 
     /**

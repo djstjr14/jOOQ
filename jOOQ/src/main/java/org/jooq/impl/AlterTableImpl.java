@@ -54,6 +54,7 @@ import static org.jooq.Nullability.NOT_NULL;
 import static org.jooq.Nullability.NULL;
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
@@ -64,6 +65,7 @@ import static org.jooq.SQLDialect.MARIADB;
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
+// ...
 // ...
 import static org.jooq.impl.DSL.alterTable;
 import static org.jooq.impl.DSL.commentOnTable;
@@ -98,6 +100,7 @@ import static org.jooq.impl.Keywords.K_MODIFY;
 import static org.jooq.impl.Keywords.K_NOT_NULL;
 import static org.jooq.impl.Keywords.K_NULL;
 import static org.jooq.impl.Keywords.K_RAISE;
+import static org.jooq.impl.Keywords.K_RENAME;
 import static org.jooq.impl.Keywords.K_RENAME_COLUMN;
 import static org.jooq.impl.Keywords.K_RENAME_CONSTRAINT;
 import static org.jooq.impl.Keywords.K_RENAME_INDEX;
@@ -176,7 +179,8 @@ final class AlterTableImpl extends AbstractQuery implements
     private static final EnumSet<SQLDialect> NO_SUPPORT_IF_EXISTS_COLUMN           = EnumSet.of(CUBRID, DERBY, FIREBIRD);
     private static final EnumSet<SQLDialect> SUPPORT_RENAME_TABLE                  = EnumSet.of(DERBY);
     private static final EnumSet<SQLDialect> NO_SUPPORT_ALTER_TYPE_AND_NULL        = EnumSet.of(POSTGRES);
-    private static final EnumSet<SQLDialect> REQUIRE_REPEAT_KEYWORD_ON_MULTI_ALTER = EnumSet.of(FIREBIRD, MARIADB, MYSQL);
+    private static final EnumSet<SQLDialect> REQUIRE_REPEAT_ADD_ON_MULTI_ALTER     = EnumSet.of(FIREBIRD, MARIADB, MYSQL);
+    private static final EnumSet<SQLDialect> REQUIRE_REPEAT_DROP_ON_MULTI_ALTER    = EnumSet.of(FIREBIRD, MARIADB, MYSQL);
 
 
 
@@ -683,6 +687,9 @@ final class AlterTableImpl extends AbstractQuery implements
 
         if (comment != null) {
             switch (family) {
+
+
+
                 case MARIADB:
                 case MYSQL:
                     break;
@@ -717,6 +724,7 @@ final class AlterTableImpl extends AbstractQuery implements
             switch (family) {
 
                 // [#5724] These databases use table-scoped index names
+
 
 
 
@@ -826,6 +834,18 @@ final class AlterTableImpl extends AbstractQuery implements
                        .qualify(qualify);
                     break;
 
+
+
+
+
+
+
+
+
+
+
+
+
                 default:
                     ctx.qualify(false)
                        .visit(K_RENAME_COLUMN).sql(' ')
@@ -882,13 +902,17 @@ final class AlterTableImpl extends AbstractQuery implements
         }
         else if (add != null) {
             boolean qualify = ctx.qualify();
+            boolean multiAdd = REQUIRE_REPEAT_ADD_ON_MULTI_ALTER.contains(ctx.family());
 
             ctx.start(ALTER_TABLE_ADD)
                .visit(K_ADD)
                .qualify(false)
-               .sql(" (");
+               .sql(' ');
 
-            boolean indent = add.size() > 1;
+            if (!multiAdd)
+                ctx.sql('(');
+
+            boolean indent = !multiAdd && add.size() > 1;
 
             if (indent)
                 ctx.formatIndentStart()
@@ -896,7 +920,10 @@ final class AlterTableImpl extends AbstractQuery implements
 
             for (int i = 0; i < add.size(); i++) {
                 if (i > 0)
-                    ctx.sql(',').formatSeparator();
+                    if (multiAdd)
+                        ctx.sql(',').formatSeparator().visit(K_ADD).sql(' ');
+                    else
+                        ctx.sql(',').formatSeparator();
 
                 FieldOrConstraint part = add.get(i);
                 ctx.visit(part);
@@ -911,8 +938,10 @@ final class AlterTableImpl extends AbstractQuery implements
                 ctx.formatIndentEnd()
                    .formatNewLine();
 
-            ctx.sql(')')
-               .qualify(qualify)
+            if (!multiAdd)
+                ctx.sql(')');
+
+            ctx.qualify(qualify)
                .end(ALTER_TABLE_ADD);
         }
         else if (addColumn != null) {
@@ -983,6 +1012,8 @@ final class AlterTableImpl extends AbstractQuery implements
             ctx.start(ALTER_TABLE_ALTER);
 
             switch (family) {
+
+
 
 
 
@@ -1085,7 +1116,7 @@ final class AlterTableImpl extends AbstractQuery implements
         else if (dropColumns != null) {
             ctx.start(ALTER_TABLE_DROP);
 
-            if (REQUIRE_REPEAT_KEYWORD_ON_MULTI_ALTER.contains(family)) {
+            if (REQUIRE_REPEAT_DROP_ON_MULTI_ALTER.contains(family)) {
                 String separator = "";
 
                 for (Field<?> dropColumn : dropColumns) {

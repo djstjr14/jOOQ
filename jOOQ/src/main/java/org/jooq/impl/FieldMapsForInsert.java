@@ -77,14 +77,14 @@ final class FieldMapsForInsert extends AbstractQueryPart {
     private static final long           serialVersionUID = -6227074228534414225L;
 
     final Table<?>                      table;
-    final List<Field<?>>                empty;
+    final Map<Field<?>, Field<?>>       empty;
     final Map<Field<?>, List<Field<?>>> values;
     int                                 rows;
 
     FieldMapsForInsert(Table<?> table) {
         this.table = table;
         this.values = new LinkedHashMap<Field<?>, List<Field<?>>>();
-        this.empty = new ArrayList<Field<?>>();
+        this.empty = new LinkedHashMap<Field<?>, Field<?>>();
     }
 
     // -------------------------------------------------------------------------
@@ -139,10 +139,11 @@ final class FieldMapsForInsert extends AbstractQueryPart {
 
 
 
+
                 case FIREBIRD: {
                     ctx.formatSeparator()
                        .start(INSERT_SELECT);
-                    ctx.visit(insertSelect(ctx));
+                    ctx.visit(insertSelect());
                     ctx.end(INSERT_SELECT);
 
                     break;
@@ -162,7 +163,7 @@ final class FieldMapsForInsert extends AbstractQueryPart {
         }
     }
 
-    private final Select<Record> insertSelect(Context<?> context) {
+    private final Select<Record> insertSelect() {
         Select<Record> select = null;
 
         for (int row = 0; row < rows; row++) {
@@ -171,7 +172,7 @@ final class FieldMapsForInsert extends AbstractQueryPart {
             for (List<Field<?>> list : values.values())
                 fields.add(list.get(row));
 
-            Select<Record> iteration = DSL.using(context.configuration()).select(fields);
+            Select<Record> iteration = DSL.select(fields);
 
             if (select == null)
                 select = iteration;
@@ -230,8 +231,12 @@ final class FieldMapsForInsert extends AbstractQueryPart {
 
         for (Object field : fields) {
             Field<?> f = Tools.tableField(table, field);
-            Field<?> e = DSL.val(null, f);
-            empty.add(e);
+            Field<?> e = empty.get(f);
+
+            if (e == null) {
+                e = DSL.val(null, f);
+                empty.put(f, e);
+            }
 
             if (!values.containsKey(f)) {
                 values.put(f, rows > 0
@@ -269,10 +274,11 @@ final class FieldMapsForInsert extends AbstractQueryPart {
     }
 
     final void newRecord() {
-        int i = 0;
+        Iterator<List<Field<?>>> it1 = values.values().iterator();
+        Iterator<Field<?>> it2 = empty.values().iterator();
 
-        for (List<Field<?>> list : values.values())
-            list.add(empty.get(i++));
+        while (it1.hasNext() && it2.hasNext())
+            it1.next().add(it2.next());
 
         rows++;
     }
