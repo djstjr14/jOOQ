@@ -156,7 +156,11 @@ public class CSVParser {
     }
 
     private static boolean isSameCharacter(char c1, char c2) {
-        return c1 != NULL_CHARACTER && c1 == c2;
+        return isNullCharacter(c1) && c1 == c2;
+    }
+    
+    private static boolean isNullCharacter(char c1) {
+        return c1 == NULL_CHARACTER;   
     }
 
     /**
