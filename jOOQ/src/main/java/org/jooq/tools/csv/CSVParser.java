@@ -78,7 +78,15 @@ public class CSVParser {
     /**
      * Constructs CSVParser using a comma for the separator.
      */
-    public static String getPending() { return pending; }
+    public String getPending() { return pending; }
+    
+    public char getSeparator() { return separator; }
+    
+    public char getQuotechar() { return quotechar; }
+    
+    public char getEscape() { return escape; }
+    
+    public boolean getInfield() { return inField; }
     
     public CSVParser() {
         this(DEFAULT_SEPARATOR, DEFAULT_QUOTE_CHARACTER, DEFAULT_ESCAPE_CHARACTER);
@@ -209,21 +217,21 @@ public class CSVParser {
         StringBuilder sb = new StringBuilder(INITIAL_READ_SIZE);
         boolean inQuotes = false;
         if (getPending() != null) {
-            sb.append(pending);
+            sb.append(getPending());
             pending = null;
             inQuotes = true;
         }
         for (int i = 0; i < nextLine.length(); i++) {
 
             char c = nextLine.charAt(i);
-            if (c == this.escape) {
-                if (isNextCharacterEscapable(nextLine, inQuotes || inField, i)) {
+            if (c == getEscape()) {
+                if (isNextCharacterEscapable(nextLine, inQuotes || getInfield(), i)) {
                     sb.append(nextLine.charAt(i + 1));
                     i++;
                 }
             }
-            else if (c == quotechar) {
-                if (isNextCharacterEscapedQuote(nextLine, inQuotes || inField, i)) {
+            else if (c == getQuotechar()) {
+                if (isNextCharacterEscapedQuote(nextLine, inQuotes || getInfield(), i)) {
                     sb.append(nextLine.charAt(i + 1));
                     i++;
                 }
@@ -237,9 +245,9 @@ public class CSVParser {
                             // not on the beginning of the line
                             i > 2
                             // not at the beginning of an escape sequence
-                            && nextLine.charAt(i - 1) != this.separator
+                            && nextLine.charAt(i - 1) != getSeparator()
                             // not at the end of an escape sequence
-                            && nextLine.length() > (i + 1) && nextLine.charAt(i + 1) != this.separator
+                            && nextLine.length() > (i + 1) && nextLine.charAt(i + 1) != getSeparator()
                         ) {
 
                             // discard white space leading up to quote
@@ -257,9 +265,9 @@ public class CSVParser {
 
                     inQuotes = !inQuotes;
                 }
-                inField = !inField;
+                inField = !getInfield();
             }
-            else if (c == separator && !inQuotes) {
+            else if (c == getSeparator() && !inQuotes) {
                 tokensOnThisLine.add(sb.toString());
                 sb.setLength(0); // start work on next token
                 inField = false;
@@ -304,7 +312,7 @@ public class CSVParser {
             // we are in quotes, therefore there can be escaped quotes in here.
             && nextLine.length() > (i + 1)
             // there is indeed another character to check.
-            && nextLine.charAt(i + 1) == quotechar;
+            && nextLine.charAt(i + 1) == getQuotechar();
     }
 
     /**
@@ -320,7 +328,7 @@ public class CSVParser {
             // we are in quotes, therefore there can be escaped quotes in here.
             && nextLine.length() > (i + 1)
             // there is indeed another character to check.
-            && (nextLine.charAt(i + 1) == quotechar || nextLine.charAt(i + 1) == this.escape);
+            && (nextLine.charAt(i + 1) == getQuotechar() || nextLine.charAt(i + 1) == getEscape());
     }
 
     /**
