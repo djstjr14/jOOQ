@@ -78,6 +78,8 @@ public class CSVParser {
     /**
      * Constructs CSVParser using a comma for the separator.
      */
+    public static String getPending() { return pending; }
+    
     public CSVParser() {
         this(DEFAULT_SEPARATOR, DEFAULT_QUOTE_CHARACTER, DEFAULT_ESCAPE_CHARACTER);
     }
@@ -167,7 +169,7 @@ public class CSVParser {
      * @return true if something was left over from last call(s)
      */
     public boolean isPending() {
-        return pending != null;
+        return getPending() != null;
     }
 
     public String[] parseLineMulti(String nextLine) throws IOException {
@@ -188,13 +190,13 @@ public class CSVParser {
      */
     private String[] parseLine(String nextLine, boolean multi) throws IOException {
 
-        if (!multi && pending != null) {
+        if (!multi && getPending() != null) {
             pending = null;
         }
 
         if (nextLine == null) {
-            if (pending != null) {
-                String s = pending;
+            if (getPending() != null) {
+                String s = getPending();
                 pending = null;
                 return new String[] { s };
             }
@@ -206,7 +208,7 @@ public class CSVParser {
         List<String> tokensOnThisLine = new ArrayList<String>();
         StringBuilder sb = new StringBuilder(INITIAL_READ_SIZE);
         boolean inQuotes = false;
-        if (pending != null) {
+        if (getPending() != null) {
             sb.append(pending);
             pending = null;
             inQuotes = true;
