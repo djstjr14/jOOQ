@@ -57,31 +57,31 @@ public class JSONArray extends ArrayList {
      *
      * @see JSONValue#writeJSONString(Object, Writer)
      */
-    public static void writeJSONString(List<?> list, Writer out) throws IOException {
+    public static void writeJSONString(List<?> list, Writer outputStr) throws IOException {
         if (list == null) {
-            out.write("null");
+        	outputStr.write("null");
             return;
         }
 
         boolean first = true;
         Iterator<?> iter = list.iterator();
 
-        out.write('[');
+        outputStr.write('[');
         while (iter.hasNext()) {
             if (first)
                 first = false;
             else
-                out.write(',');
+            	outputStr.write(',');
 
             Object value = iter.next();
             if (value == null) {
-                out.write("null");
+            	outputStr.write("null");
                 continue;
             }
 
-            JSONValue.writeJSONString(value, out);
+            JSONValue.writeJSONString(value, outputStr);
         }
-        out.write(']');
+        outputStr.write(']');
     }
 
     /**
