@@ -95,25 +95,25 @@ public class JSONArray extends ArrayList {
             return "null";
 
         boolean first = true;
-        StringBuffer sb = new StringBuffer();
+        StringBuffer strbuff = new StringBuffer();
         Iterator<?> iter = list.iterator();
 
-        sb.append('[');
+        strbuff.append('[');
         while (iter.hasNext()) {
             if (first)
                 first = false;
             else
-                sb.append(',');
+            	strbuff.append(',');
 
             Object value = iter.next();
             if (value == null) {
-                sb.append("null");
+            	strbuff.append("null");
                 continue;
             }
-            sb.append(JSONValue.toJSONString(value));
+            strbuff.append(JSONValue.toJSONString(value));
         }
-        sb.append(']');
-        return sb.toString();
+        strbuff.append(']');
+        return strbuff.toString();
     }
 
     @Override
