@@ -1,5 +1,3 @@
-INSERT INTO CUSTOMER VALUES (1, 'sangwon', 'sangwon@test.com');
-INSERT INTO CUSTOMER VALUES (2, 'kevin', 'kevin@test.com');
 
 INSERT INTO PRODUCT VALUES (1, 'iphone', 1);
 INSERT INTO PRODUCT VALUES (2, 'imac', 1);
