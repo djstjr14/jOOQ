@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 package org.jooq.conf;
 
 import javax.xml.bind.annotation.XmlEnum;
