@@ -568,73 +568,73 @@ public class InformationSchema implements Serializable
         objectNull = catalogs == null;
         otherObjectNotNull = other.catalogs != null;
         EqualWithOther = catalogs.equals(other.catalogs);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = schemata == null;
         otherObjectNotNull = other.schemata != null;
         EqualWithOther = schemata.equals(other.schemata);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = sequences == null;
         otherObjectNotNull = other.sequences != null;
         EqualWithOther = sequences.equals(other.sequences);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = tables == null;
         otherObjectNotNull = other.tables != null;
         EqualWithOther = tables.equals(other.tables);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = columns == null;
         otherObjectNotNull = other.columns != null;
         EqualWithOther = columns.equals(other.columns);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = tableConstraints == null;
         otherObjectNotNull = other.tableConstraints != null;
         EqualWithOther = tableConstraints.equals(other.tableConstraints);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = keyColumnUsages == null;
         otherObjectNotNull = other.keyColumnUsages != null;
         EqualWithOther = keyColumnUsages.equals(other.keyColumnUsages);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = referentialConstraints == null;
         otherObjectNotNull = other.referentialConstraints != null;
         EqualWithOther = referentialConstraints.equals(other.referentialConstraints);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = indexes == null;
         otherObjectNotNull = other.indexes != null;
         EqualWithOther = indexes.equals(other.indexes);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = indexColumnUsages == null;
         otherObjectNotNull = other.indexColumnUsages != null;
         EqualWithOther = indexColumnUsages.equals(other.indexColumnUsages);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         objectNull = routines == null;
         otherObjectNotNull = other.routines != null;
         EqualWithOther = routines.equals(other.routines);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         } 
         objectNull = parameters == null;
         otherObjectNotNull = other.parameters != null;
         EqualWithOther = parameters.equals(other.parameters);
-        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
         	return false;
         }
         return true;
