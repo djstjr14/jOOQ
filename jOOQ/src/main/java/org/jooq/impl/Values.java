@@ -68,7 +68,9 @@ final class Values<R extends Record> extends AbstractTable<R> {
     }
 
     static Row[] assertNotEmpty(Row[] rows) {
-        if (rows == null || rows.length == 0)
+    	boolean NOrows = (rows == null || rows.length == 0);
+    	
+        if (NOrows)
             throw new IllegalArgumentException("Cannot create a VALUES() constructor with an empty set of rows");
 
         return rows;
