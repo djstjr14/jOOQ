@@ -463,16 +463,14 @@ public class MySQLDSL extends DSL {
      * href="dev.mysql.com/doc/refman/5.5/en/enum.html">dev.mysql.com/doc/
      * refman/5.5/en/enum.html</a> for more details about MySQL enum types
      */
+   protected static <E extends java.lang.Enum<E> & org.jooq.EnumType> boolean isInValidIndex(E[] values, int index) {
+    	return index <= 0 || index > values.length;
+    }
     public static <E extends java.lang.Enum<E> & org.jooq.EnumType> E enumType(Class<E> type, int index) {
-        if (index <= 0) {
-            return null;
+    	E[] values = type.getEnumConstants();
+        if(isInValidIndex(values,index)) {
+        	return null;
         }
-
-        E[] values = type.getEnumConstants();
-        if (index > values.length) {
-            return null;
-        }
-
         return values[index - 1];
     }
 }
