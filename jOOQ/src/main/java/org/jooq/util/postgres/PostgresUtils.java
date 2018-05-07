@@ -148,18 +148,18 @@ public class PostgresUtils {
         
         try {
         	hexDigit = input.read();
-            isFinish = hexDigit == -1
+            isFinish = hexDigit == -1;
             while (!isFinish) {
                 byteValue = (hexValue(hexDigit) << 4);
                 hexDigit = input.read();
-                isFinish = hexDigit == -1
+                isFinish = hexDigit == -1;
                 if (isFinish) {
                     break;
                 }
                 byteValue += hexValue(hexDigit);
                 bytes.write(byteValue);
                 hexDigit = input.read();
-            	isFinish = hexDigit == -1
+            	isFinish = hexDigit == -1;
             }
         }
 
