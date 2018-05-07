@@ -113,8 +113,8 @@ createTableStatement = 'CREATE' [ [ 'GLOBAL' ] 'TEMPORARY' ] 'TABLE' [ 'IF NOT E
 ( break )
 (
   'AS' select
-| '('   ( 'CONSTRAINT' constraintName constraint | constraint | column )
-  { ',' ( 'CONSTRAINT' constraintName constraint | constraint | column ) } ')'
+| '('   ( 'CONSTRAINT' constraintName constraint | constraint | index | column )
+  { ',' ( 'CONSTRAINT' constraintName constraint | constraint | index | column ) } ')'
 )
 break
 [ 'ON COMMIT' ( 'DELETE ROWS' | 'DROP' | 'PRESERVE ROWS' ) ]
@@ -122,7 +122,8 @@ break
 ;
 
 createIndexStatement = 'CREATE' [ 'UNIQUE' ] 'INDEX' [ 'IF NOT EXISTS' ] [ indexName ] break
-  'ON' tableName '(' identifiers ')'
+  'ON' tableName '(' sortFields ')'
+  [ 'INCLUDE' '(' identifiers ')' ]
   [ 'WHERE' condition ]
 ;
 
@@ -195,7 +196,9 @@ revokeStatement = 'REVOKE'
 selectStatement = select
 ;
 
-insertStatement = [ with ] 'INSERT INTO' tableName
+insertStatement =
+  [ with ]
+  ( 'INSERT' | 'INS' ) 'INTO' tableName
   [ '(' identifiers ')' ]
   (
     values
@@ -220,7 +223,12 @@ insertStatement = [ with ] 'INSERT INTO' tableName
 values = 'VALUES' '(' fields ')' { ',' '(' fields ')' }
 ;
 
-updateStatement = [ with ] 'UPDATE' tableName 'SET' setClauses [ 'WHERE' condition ] [ 'RETURNING' ( '*' | fields ) ]
+updateStatement =
+  [ with ]
+  ( 'UPDATE' | 'UPD' ) tableName
+  'SET' setClauses
+  [ 'WHERE' condition ]
+  [ 'RETURNING' ( '*' | fields ) ]
 ;
 
 setClauses = setClause { ',' setClause }
@@ -229,7 +237,11 @@ setClauses = setClause { ',' setClause }
 setClause = fieldName '=' field
 ;
 
-deleteStatement = [ with ] 'DELETE' [ 'FROM' ] tableName [ 'WHERE' condition ] [ 'RETURNING' ( '*' | fields ) ]
+deleteStatement =
+  [ with ]
+  ( 'DELETE' | 'DEL' ) [ 'FROM' ] tableName
+  [ 'WHERE' condition ]
+  [ 'RETURNING' ( '*' | fields ) ]
 ;
 
 mergeStatement = [ with ] 'MERGE' [ 'INTO' ] tableName [ [ 'AS' ] identifier ]
@@ -263,6 +275,9 @@ column =
     )
   }
 )
+;
+
+index = ( 'KEY' | 'INDEX' ) [ identifier ] '(' sortFields ')'
 ;
 
 constraint =
@@ -322,7 +337,7 @@ queryTerm =
 
 queryPrimary =
   '(' select ')'
-| 'SELECT'
+| ( 'SELECT' | 'SEL' )
     [ distinct ]
     [ top ]
     selectList
@@ -425,12 +440,12 @@ sortField = field [ 'ASC' | 'DESC' ] [ 'NULLS FIRST' | 'NULLS LAST' ]
 tables = table { ',' table }
 ;
 
-table = tableFactor { unqualifiedJoin | innerJoin | outerJoin | semiAntiJoin }
+table = lateral { unqualifiedJoin | innerJoin | outerJoin | semiAntiJoin }
 ;
 
 unqualifiedJoin =
 ( 'CROSS JOIN' | 'CROSS APPLY' | 'OUTER APPLY' | 'NATURAL' [ ( 'LEFT' | 'RIGHT' ) [ 'OUTER' ] ] 'JOIN' )
-tableFactor
+lateral
 ;
 
 innerJoin =
@@ -448,12 +463,22 @@ outerJoin =
 semiAntiJoin = 'LEFT' ( 'SEMI' | 'ANTI' ) 'JOIN' table joinQualification
 ;
 
+lateral =
+  'LATERAL' tableFactor
+| tableFactor
+;
+
 tableFactor =
-  'LATERAL' '(' select ')' [ correlationName ]
-| '(' select ')' [ correlationName ]
-| values [ correlationName ]
-| tableName [ versions ] [ correlationName ] [ tableHints ]
+  tableName [ versions ] [ correlationName ] [ tableHints ]
 | '(' table ')' [ correlationName ]
+| '(' select ')' [ correlationName ]
+| tableFunction [ correlationName ]
+| 'UNNEST' '(' field ')'
+| values [ correlationName ]
+;
+
+tableFunction =
+  'GENERATE_SERIES' '(' sum ',' sum [ ',' sum ] ')'
 ;
 
 tableHints = 'WITH' '(' tableHint { ',' tableHint } ')'
@@ -555,7 +580,24 @@ term =
 | ( 'ATN2' | 'ATAN2' ) '(' sum ',' sum ')'
 | 'ARRAY' '[' [ fields ] ']'
 | 'AVG' '(' [ 'DISTINCT' | 'ALL' ] field ')' [ keep | filter ] [ over ]
+| 'BIN_AND' '(' field ',' field ')'
+| 'BIN_SHL' '(' field ',' field ')'
+| 'BIN_SHR' '(' field ',' field ')'
+| 'BIN_OR' '(' field ',' field ')'
+| 'BIN_XOR' '(' field ',' field ')'
+| 'BITAND' '(' field ',' field ')'
+| 'BITOR' '(' field ',' field ')'
+| 'BITXOR' '(' field ',' field ')'
+| 'BIT_AND' '(' field ',' field ')'
+| 'BIT_COUNT' '(' field ')'
 | 'BIT_LENGTH' '(' field ')'
+| 'BIT_NAND' '(' field ',' field ')'
+| 'BIT_NOR' '(' field ',' field ')'
+| 'BIT_NOT' '(' field ',' field ')'
+| 'BIT_OR' '(' field ',' field ')'
+| 'BIT_XNOR' '(' field ',' field ')'
+| 'BITXOR' '(' field ',' field ')'
+| 'BIT_XOR' '(' field ',' field ')'
 | case
 | 'CAST' '(' field 'AS' dataType ')'
 | ( 'CEIL' | 'CEILING' ) '(' sum ')'
@@ -597,6 +639,7 @@ term =
 | 'HOUR' '(' field ')'
 | 'IFNULL' '(' field ',' field ')'
 | 'INSTR' '(' field ',' field ')'
+| intervalLiteral
 | 'IIF' '(' condition ',' field ',' field ')'
 | 'ISNULL' '(' field ',' field ')'
 | ( 'LOWER' | 'LCASE' ) '(' field ')'
@@ -646,7 +689,7 @@ term =
   | 'REGR_SYY'
   | 'REGR_SXY'
   ) '(' sum ',' sum ')'
-| 'REPLACE' '(' field ',' field [ ',' field ] ')'
+| ( 'REPLACE' | 'OREPLACE' ) '(' field ',' field [ ',' field ] ')'
 | 'REPEAT' '(' field ',' field ')'
 | 'REVERSE' '(' field ')'
 | 'RPAD' '(' field ',' field [ ',' field ] ')'
@@ -659,15 +702,18 @@ term =
 | ( 'RAD' | 'RADIAN' ) '(' sum ')'
 | 'ROW' '(' fields ')'
 | ( 'SUBSTR' | 'SUBSTRING' ) '(' field ',' sum [ ',' sum ] ')'
-| 'SUBSTRING' '(' field 'FROM' sum [ 'FOR' sum ] ')'
-| 'SPACE' '(' field ')'
 | 'SECOND' '(' field ')'
+| ( 'SHL' | 'SHIFTLEFT' ) '(' field ',' field ')'
+| ( 'SHR' | 'SHIFTRIGHT' ) '(' field ',' field ')'
 | 'SIGN' '(' field ')'
 | ( 'SQR' | 'SQRT' ) '(' sum ')'
 | 'SIN' '(' sum ')'
 | 'SINH' '(' sum ')'
+| 'SPACE' '(' field ')'
 | 'STDDEV_POP' '(' field ')' [ over ]
 | 'STDDEV_SAMP' '(' field ')' [ over ]
+| 'STR_REPLACE' '(' field ',' field ',' field ')'
+| 'SUBSTRING' '(' field 'FROM' sum [ 'FOR' sum ] ')'
 | 'SUM' '(' [ 'DISTINCT' | 'ALL' ] field ')' [ keep | filter ]
 | 'TAN' '(' sum ')'
 | 'TANH' '(' sum ')'
@@ -677,7 +723,7 @@ term =
 | 'TO_DATE' '(' field ',' field ')'
 | 'TO_NUMBER' '(' field ')'
 | 'TO_TIMESTAMP' '(' field ',' field ')'
-| 'TRANSLATE' '(' field ',' field ',' field ')'
+| ( 'TRANSLATE' | 'OTRANSLATE' ) '(' field ',' field ',' field ')'
 | 'TRIM' '(' field ')'
 | 'TRUNC' '(' field ',' stringLiteral ')'
 | 'TRUNC' '(' sum ',' sum ')'
@@ -709,7 +755,9 @@ keep = 'KEEP' '(' 'DENSE_RANK' ( 'FIRST' | 'LAST' ) 'ORDER BY' sortFields ')'
 filter = 'FILTER' '(' 'WHERE' condition ')'
 ;
 
-over = [ 'RESPECT NULLS' | 'IGNORE NULLS' ]
+over =
+  [ 'FROM FIRST' | 'FROM LAST' ]
+  [ 'RESPECT NULLS' | 'IGNORE NULLS' ]
   'OVER'
   (
     identifier
@@ -848,6 +896,9 @@ timeLiteral = 'TIME' stringLiteral
 ;
 
 timestampLiteral = 'TIMESTAMP' stringLiteral
+;
+
+intervalLiteral = 'INTERVAL' stringLiteral
 ;
 
 signedInteger = todo

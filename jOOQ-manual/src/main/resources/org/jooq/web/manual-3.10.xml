@@ -13674,6 +13674,185 @@ public class DeleteOrUpdateWithoutWhereException extends RuntimeException {}
                         </html></content>
                     </section>
 
+                    <section id="mocking-connection">
+                        <title>Mocking Connection</title>
+                        <content><html>
+                            <p>
+                                When writing unit tests for your data access layer, you have probably used some generic mocking tool offered by popular providers like <a href="http://code.google.com/p/mockito/">Mockito</a>, <a href="http://jmock.org/">jmock</a>, <a href="http://mockrunner.sourceforge.net/">mockrunner</a>, or even <a href="http://www.dbunit.org/">DBUnit</a>. With jOOQ, you can take advantage of the built-in JDBC mock API that allows you to emulate a simple database on the JDBC level for precisely those SQL/JDBC use cases supported by jOOQ.
+                            </p>
+
+                            <p>
+                                <strong>Disclaimer: </strong> The general idea of mocking a JDBC connection with this jOOQ API is to provide quick workarounds, injection points, etc. using a very simple JDBC abstraction. It is <em>NOT RECOMMENDED</em> to emulate an entire database (including complex state transitions, transactions, locking, etc.) using this mock API. Once you have this requirement, please consider using an actual database instead for integration testing, rather than implementing your test database inside of a <code>MockDataProvider</code>.
+                            </p>
+
+                            <h3>Mocking the JDBC API</h3>
+                            <p>
+                                JDBC is a very complex API. It takes a lot of time to write a useful and correct mock implementation, implementing at least these interfaces:
+                            </p>
+                            <ul>
+                                <li><reference class="java.sql.Connection"/></li>
+                                <li><reference class="java.sql.Statement"/></li>
+                                <li><reference class="java.sql.PreparedStatement"/></li>
+                                <li><reference class="java.sql.CallableStatement"/></li>
+                                <li><reference class="java.sql.ResultSet"/></li>
+                                <li><reference class="java.sql.ResultSetMetaData"/></li>
+                            </ul>
+
+                            <p>
+                                Optionally, you may even want to implement interfaces, such as <reference class="java.sql.Array"/>, <reference class="java.sql.Blob"/>, <reference class="java.sql.Clob"/>, and many others. In addition to the above, you might need to find a way to simultaneously support incompatible JDBC minor versions, such as 4.0, 4.1
+                            </p>
+
+                            <h3>Using jOOQ's own mock API</h3>
+                            <p>
+                                This work is greatly simplified, when using jOOQ's own mock API. The <code>org.jooq.tools.jdbc</code> package contains all the essential implementations for both JDBC 4.0 and 4.1, which are needed to mock JDBC for jOOQ. In order to write mock tests, provide the jOOQ <reference id="dsl-context" title="Configuration"/> with a <reference class="org.jooq.tools.jdbc.MockConnection" title="MockConnection"/>, and implement the <reference class="org.jooq.tools.jdbc.MockDataProvider" title="MockDataProvider"/>:
+                            </p>
+
+</html><java><![CDATA[// Initialise your data provider (implementation further down):
+MockDataProvider provider = new MyProvider();
+MockConnection connection = new MockConnection(provider);
+
+// Pass the mock connection to a jOOQ DSLContext:
+DSLContext create = DSL.using(connection, SQLDialect.ORACLE);
+
+// Execute queries transparently, with the above DSLContext:
+Result<BookRecord> result = create.selectFrom(BOOK).where(BOOK.ID.eq(5)).fetch();]]></java><html>
+
+                            <p>
+                                As you can see, the configuration setup is simple. Now, the <code>MockDataProvider</code> acts as your single point of contact with JDBC / jOOQ. It unifies any of these execution modes, transparently:
+                            </p>
+
+                            <ul>
+                                <li>Statements without results</li>
+                                <li>Statements without results but with generated keys</li>
+                                <li>Statements with results</li>
+                                <li>Statements with several results</li>
+                                <li>Batch statements with single queries and multiple bind value sets</li>
+                                <li>Batch statements with multiple queries and no bind values</li>
+                            </ul>
+
+                            <p>
+                                The above are the execution modes supported by jOOQ. Whether you're using any of jOOQ's various fetching modes (e.g. <reference id="pojos" title="pojo fetching"/>, <reference id="lazy-fetching" title="lazy fetching"/>, <reference id="many-fetching" title="many fetching"/>, <reference id="later-fetching" title="later fetching"/>) is irrelevant, as those modes are all built on top of the standard JDBC API.
+                            </p>
+
+                            <h3>Implementing MockDataProvider</h3>
+                            <p>
+                                 Now, here's how to implement <code>MockDataProvider</code>:
+                            </p>
+
+</html><java><![CDATA[public class MyProvider implements MockDataProvider {
+
+    @Override
+    public MockResult[] execute(MockExecuteContext ctx) throws SQLException {
+
+        // You might need a DSLContext to create org.jooq.Result and org.jooq.Record objects
+        DSLContext create = DSL.using(SQLDialect.ORACLE);
+        MockResult[] mock = new MockResult[1];
+
+        // The execute context contains SQL string(s), bind values, and other meta-data
+        String sql = ctx.sql();
+
+        // Exceptions are propagated through the JDBC and jOOQ APIs
+        if (sql.toUpperCase().startsWith("DROP")) {
+            throw new SQLException("Statement not supported: " + sql);
+        }
+
+        // You decide, whether any given statement returns results, and how many
+        else if (sql.toUpperCase().startsWith("SELECT")) {
+
+            // Always return one record
+            Result<Record2<Integer, String>> result = create.newResult(AUTHOR.ID, AUTHOR.LAST_NAME);
+            result.add(create
+                .newRecord(AUTHOR.ID, AUTHOR.LAST_NAME)
+                .values(1, "Orwell"));
+            mock[0] = new MockResult(1, result);
+        }
+
+        // You can detect batch statements easily
+        else if (ctx.batch()) {
+            // [...]
+        }
+
+        return mock;
+    }
+}]]></java><html>
+
+                            <p>
+                                Essentially, the <reference class="org.jooq.tools.jdbc.MockExecuteContext" title="MockExecuteContext"/> contains all the necessary information for you to decide, what kind of data you should return. The <reference class="org.jooq.tools.jdbc.MockResult" title="MockResult"/> wraps up two pieces of information:
+                            </p>
+                            <ul>
+                                <li> <reference class="java.sql.Statement" anchor="#getUpdateCount" title="Statement.getUpdateCount()"/>: The number of affected rows</li>
+                                <li> <reference class="java.sql.Statement" anchor="#getResultSet()" title="Statement.getResultSet()"/>: The result set</li>
+                            </ul>
+
+                            <p>
+                                You should return as many <code>MockResult</code> objects as there were query executions (in <reference id="batch-execution" title="batch mode"/>) or results (in <reference id="many-fetching" title="fetch-many mode"/>). Instead of an awkward JDBC <code>ResultSet</code>, however, you can construct a "friendlier" <reference class="org.jooq.Result"/> with your own record types. The jOOQ mock API will use meta data provided with this <code>Result</code> in order to create the necessary JDBC <reference class="java.sql.ResultSetMetaData"/>
+                            </p>
+
+                            <p>
+                                See the <reference class="org.jooq.tools.jdbc.MockDataProvider" title="MockDataProvider Javadoc"/> for a list of rules that you should follow.
+                            </p>
+                        </html></content>
+                    </section>
+
+                    <section id="mock-file-database">
+                        <title>Mock File Database</title>
+                        <content><html>
+                            <p>
+                                An alternative to the previous <reference id="mocking-connection" title="programmatic implementation of a mocking connection"/> is the more declarative approach using a <reference class="org.jooq.tools.jdbc.MockFileDatabase"/>, which reads SQL statements and their corresponding result sets directly from a file. Assuming the following file content:
+                            </p>
+
+</html><text><![CDATA[# All lines with a leading hash are ignored. This is the MockFileDatabase comment syntax
+-- SQL comments are parsed and passed to the SQL statement
+/* The same is true for multi-line SQL comments */
+select 'A';
+> A
+> -
+> A
+@ rows: 1
+
+select 'A', 'B';
+> A B
+> - -
+> A B
+@ rows: 1
+]]></text><html>
+
+                            <p>
+                                The above syntax consists of the following elements to define an individual statement:
+                            </p>
+
+                            <ul>
+                                <li><code>MockFileDatabase</code> comments are any line with a leading hash (<code>"#"</code>) symbol. They are ignored when reading the file</li>
+                                <li>SQL comments are part of the SQL statement</li>
+                                <li>A SQL statement always starts on a new line and ends with a semi colon (<code>;</code>), which is the last symbol on the line (apart from whitespace)</li>
+                                <li>If the statement has a result set, it immediately succeeds the SQL statement and is prefixed by angle brackets and a whitespace (<code>"&gt; "</code>). Any format that is accepted by <reference class="org.jooq.DSLContext" title="DSLContext.fetchFromTXT()" anchor="#fetchFromTXT-java.lang.String-"/> is accepted.</li>
+                                <li>The statement is always terminated by the row count, which is prefixed by an at symbol, the "rows" keyword, and a double colon (<code>"@ rows:"</code>).</li>
+                            </ul>
+
+                            <p>
+                                The above database supports exactly two statements in total, and is completely stateless (e.g. an <code>INSERT</code> statement cannot be made to affect the results of a subsequent <code>SELECT</code> statement on the same table). It can be loaded through the <code>MockFileDatabase</code> can be used as follows:
+                            </p>
+
+</html><java><![CDATA[// Initialise your data provider (implementation further down):
+MockFileDatabase db = new MockFileDatabase(new File("/path/to/db.txt"));
+MockConnection connection = new MockConnection(provider);
+
+// Pass the mock connection to a jOOQ DSLContext:
+DSLContext create = DSL.using(connection, SQLDialect.POSTGRES);
+
+// Execute queries transparently, with the above DSLContext:
+Result<?> result = create.select(inline("A")).fetch();
+Result<?> result = create.select(inline("A"), inline("B")).fetch();
+
+// Queries that are not listed in the MockFileDatabase will simply fail
+Result<?> result = create.select(inline("C")).fetch();]]></java><html>
+
+                            <p>
+                                In situations where the expected set of queries are well-defined, the <code>MockFileDatabase</code> can offer a very effective way of mocking parts of the database engine, without offering the complete functionality of the <reference id="mocking-connection" title="programmatic mocking connection"/>.
+                            </p>
+                        </html></content>
+                    </section>
+
                     <section id="parsing-connection">
                         <title>Parsing Connection</title>
                         <content><html>
@@ -14229,7 +14408,7 @@ result.forEach((Object[] entities) -> {
 							</p>
 
 </html><xml><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <!-- Configure the database connection here -->
   <jdbc>
     <driver>oracle.jdbc.OracleDriver</driver>
@@ -14502,7 +14681,7 @@ result.forEach((Object[] entities) -> {
                                         <strong>XML configuration (standalone and Maven)</strong>
                                     </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <logging>WARN</logging>
   ...
 </configuration>]]></xml><html>
@@ -14547,7 +14726,7 @@ result.forEach((Object[] entities) -> {
                                         <strong>XML configuration (standalone and Maven)</strong>
                                     </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <jdbc>
     <driver>com.mysql.jdbc.Driver</driver>
     <url>jdbc:mysql://localhost/testdb</url>
@@ -14601,7 +14780,7 @@ result.forEach((Object[] entities) -> {
                                         <strong>XML configuration (standalone and Maven)</strong>
                                     </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <jdbc>
     <driver>com.mysql.jdbc.Driver</driver>
     <url>jdbc:mysql://localhost/testdb</url>
@@ -14658,7 +14837,7 @@ result.forEach((Object[] entities) -> {
                                         Quite often, you'd like to keep passwords (or other elements) out of your configuration, or you'd like to repeat common values for different plugins, e.g. for both <reference id="jooq-with-flyway" title="jOOQ and Flyway"/>. In those cases, the programmatic configuration makes it easiest to quickly replace them, because those values are just ordinary Java local variables for that API. When you use the XML configuration with Maven, you can also very simply use Maven's property mechanism to achieve something like this:
                                     </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <jdbc>
     <driver>${db.driver}</driver>
     <url>${db.url}</url>
@@ -14687,7 +14866,7 @@ result.forEach((Object[] entities) -> {
                                         <strong>XML configuration (standalone and Maven)</strong>
                                     </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <!-- Optional: The fully qualified class name of the code generator. -->
     <name>...</name>
@@ -14793,7 +14972,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <name>org.jooq.util.xml.XMLDatabase</name>
@@ -14909,7 +15088,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <regexFlags>COMMENTS DOTALL</regexFlags>
@@ -14976,7 +15155,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <includes>.*</includes>
@@ -15021,7 +15200,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <includes>.*</includes>
@@ -15070,7 +15249,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <includeTables>true</includeTables>
@@ -15136,7 +15315,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <recordVersionFields>REC_VERSION</recordVersionFields>
@@ -15185,7 +15364,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <syntheticIdentities>SCHEMA\.TABLE\.ID</syntheticIdentities>
@@ -15231,7 +15410,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <syntheticPrimaryKeys>SCHEMA\.TABLE\.COLUMN(1|2)</syntheticPrimaryKeys>
@@ -15281,7 +15460,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <overridePrimaryKeys>MY_UNIQUE_KEY_NAME</overridePrimaryKeys>
@@ -15335,7 +15514,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <dateAsTimestamp>true</dateAsTimestamp>
@@ -15385,7 +15564,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <ignoreProcedureReturnValues>true</ignoreProcedureReturnValues>
@@ -15438,7 +15617,7 @@ result.forEach((Object[] entities) -> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <unsignedTypes>true</unsignedTypes>
@@ -15496,7 +15675,7 @@ result.forEach((Object[] entities) -> {
                                             </p>
 
 </html><xml><![CDATA[<!-- Read only a single schema (from all catalogs, but in most databases, there is only one "default catalog") -->
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <inputSchema>my_schema</inputSchema>
@@ -15505,7 +15684,7 @@ result.forEach((Object[] entities) -> {
 </configuration>
 
 <!-- Read only a single catalog and all its schemas -->
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <inputCatalog>my_catalog</inputCatalog>
@@ -15514,7 +15693,7 @@ result.forEach((Object[] entities) -> {
 </configuration>
 
 <!-- Read only a single catalog and only a single schema -->
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <inputCatalog>my_catalog</inputCatalog>
@@ -15557,7 +15736,7 @@ result.forEach((Object[] entities) -> {
                                             </p>
 
 </html><xml><![CDATA[<!-- Read two schemas (from all catalogs, but in most databases, there is only one "default catalog") -->
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <schemata>
@@ -15573,7 +15752,7 @@ result.forEach((Object[] entities) -> {
 </configuration>
 
 <!-- Read two catalogs and all their schemas -->
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <catalogs>
@@ -15589,7 +15768,7 @@ result.forEach((Object[] entities) -> {
 </configuration>
 
 <!-- Read two schemas from one specific catalog -->
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <catalogs>
@@ -15709,7 +15888,7 @@ configuration {
                                             </p>
 
 </html><xml><![CDATA[<!-- Map input names to a concrete output name: -->
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <inputCatalog>my_input_catalog</inputCatalog>
@@ -15721,7 +15900,7 @@ configuration {
 </configuration>
 
 <!-- Map input names to the "default" catalog or schema (i.e. no name): -->
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <inputCatalog>my_input_catalog</inputCatalog>
@@ -15817,7 +15996,7 @@ configuration {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <catalogVersionProvider>SELECT :catalog_name || '_' || MAX("version") FROM "schema_version"</catalogVersionProvider>
@@ -15872,7 +16051,7 @@ configuration {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <orderProvider>com.example.CaseInsensitiveOrderProvider</orderProvider>
@@ -15963,7 +16142,7 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <!-- The first matching forcedType will be applied to the data type definition. -->
@@ -16037,7 +16216,7 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <!-- The first matching forcedType will be applied to the data type definition. -->
@@ -16107,7 +16286,7 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <!-- The first matching forcedType will be applied to the data type definition. -->
@@ -16189,7 +16368,7 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <tableValuedFunctions>true</tableValuedFunctions>
@@ -16263,7 +16442,7 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <generate>
       <!-- This overrides all the other individual flags -->
@@ -16370,7 +16549,7 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <generate>
       <jpaAnnotations>true</jpaAnnotations>
@@ -16422,7 +16601,16 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
                                             </ul>
 
                                             <p>
-                                                Semantically, the above types are exactly equivalent, although the new types do away with the many flaws of the JDBC types.
+                                                Semantically, the above types are exactly equivalent, although the new types do away with the many flaws of the JDBC types. If there is no JDBC type for an equivalent JSR 310 type, then the JSR 310 type is generated by default. This includes
+                                            </p>
+
+                                            <ul>
+                                                <li><reference class="java.time.OffsetTime"/> (for SQL <code>TIME WITH TIME ZONE</code>)</li>
+                                                <li><reference class="java.time.OffsetDateTime"/> (for SQL <code>TIMESTAMP WITH TIME ZONE</code>)</li>
+                                            </ul>
+
+                                            <p>
+                                                To get more fine-grained control of the above, you may wish to consider applying <reference id="data-type-rewrites" title="data type rewriting"/>.
                                             </p>
 
                                             <p>
@@ -16433,7 +16621,7 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
                                                 <strong>XML configuration (standalone and Maven)</strong>
                                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <generate>
       <javaTimeTypes>true</javaTimeTypes>
@@ -16464,6 +16652,53 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
 
                                         </html></content>
                                     </section>
+
+                                    <section id="codegen-generate-fully-qualified-types">
+                                        <title>Fully Qualified Types</title>
+                                        <content><html>
+                                            <p>
+                                                By default, the jOOQ code generator references all types as unqualified types, generating the necessary import statement at the beginning of generated classes.
+                                            </p>
+
+                                            <p>
+                                                In rare cases, this can cause problems when two types conflict with each other, e.g. when there is both a <code>TABLE</code> and a <code>TABLE_RECORD</code> table (generating a <code>TableRecord</code> <reference class="org.jooq.Record"/> type for <code>TABLE</code> as well as a <code>TableRecord</code> <reference class="org.jooq.Table"/> type for <code>TABLE_RECORD</code>). In this case, users can specify a regular expression that matches all objects whose corresponding generated artefacts should never be imported, but always be fully qualified.
+                                            </p>
+
+                                            <p>
+                                                <strong>XML configuration (standalone and Maven)</strong>
+                                            </p>
+
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
+  <generator>
+    <generate>
+      <fullyQualifiedTypes>.*\.MY_TABLE</fullyQualifiedTypes>
+    </generate>
+  </generator>
+</configuration>]]></xml><html>
+
+                                            <p>
+                                                <strong>Programmatic configuration</strong>
+                                            </p>
+
+</html><java><![CDATA[configuration
+  .withGenerator(new Generator(
+    .withGenerate(new Generate()
+      .withFullyQualifiedTypes(".*\.MY_TABLE"))));]]></java><html>
+
+                                            <p>
+                                                <strong>Gradle configuration</strong>
+                                            </p>
+
+</html><java><![CDATA[configuration {
+  generator {
+    generate {
+      fullyQualifiedTypes = '.*\.MY_TABLE'
+    }
+  }
+}]]></java><html>
+
+                                        </html></content>
+                                    </section>
                                 </sections>
                             </section>
 
@@ -16475,7 +16710,7 @@ public class CaseInsensitiveOrderProvider implements Comparator<Definition> {
                                     </p>
 
 </html><![CDATA[
-<configuration>
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   ...
   <generator>
     ...
@@ -17539,16 +17774,6 @@ public class Book implements java.io.Serializable
 								When using a custom type in jOOQ, you need to let jOOQ know about its associated <reference class="org.jooq.Converter"/>. Ad-hoc usages of such converters has been discussed in the chapter about <reference id="data-type-conversion" title="data type conversion"/>. However, when mapping a custom type onto a standard JDBC type, a more common use-case is to let jOOQ know about custom types at code generation time (if you're using non-standard JDBC types, like for example JSON or HSTORE, see the <reference id="custom-data-type-bindings" title="manual's section about custom data type bindings"/>). Use the following configuration elements to specify, that you'd like to use GregorianCalendar for all database fields that start with DATE_OF_
       						</p>
 
-                            <p>
-                                There's a simple configuration using only <code>&lt;forcedTypes/></code> configuration elements, and an advanced configuration using both <code>&lt;forcedTypes/></code> and <code>&lt;customTypes/></code> elements, which allow for greater reuse.
-                            </p>
-
-                            <h3>Simple configuration</h3>
-
-                            <p>
-                                The simple configuration is most useful in most situations as it can do only by specifying <code>&lt;forcedTypes/></code>:
-                            </p>
-
 </html><xml><![CDATA[<database>
 
   <!-- Then, associate custom types with database columns -->
@@ -17560,59 +17785,6 @@ public class Book implements java.io.Serializable
 
       <!-- Associate that custom type with your converter. -->
       <converter>com.example.CalendarConverter</converter>
-
-      <!-- Add a Java regular expression matching fully-qualified columns. Use the pipe to separate several expressions.
-
-           If provided, both "expressions" and "types" must match. -->
-      <expression>.*\.DATE_OF_.*</expression>
-
-      <!-- Add a Java regular expression matching data types to be forced to
-           have this type.
-
-           Data types may be reported by your database as:
-           - NUMBER              regexp suggestion: NUMBER
-           - NUMBER(5)           regexp suggestion: NUMBER\(5\)
-           - NUMBER(5, 2)        regexp suggestion: NUMBER\(5,\s*2\)
-           - any other form
-
-           It is thus recommended to use defensive regexes for types.
-
-           If provided, both "expressions" and "types" must match. -->
-      <types>.*</types>
-    </forcedType>
-  </forcedTypes>
-</database>]]></xml><html>
-
-                            <p>
-
-                            </p>
-
-                            <h3>Advanced configuration</h3>
-
-                            <p>
-                                The advanced configuration allows for specifying <code>&lt;customTypes/></code>, which can be used to reuse configuration elements for user type / converter / binding combinations by giving them a name:
-                            </p>
-
-</html><xml><![CDATA[<database>
-  <!-- First, register your custom types here -->
-  <customTypes>
-    <customType>
-      <!-- Specify the name of your custom type. Avoid using names from org.jooq.impl.SQLDataType -->
-      <name>GregorianCalendar</name>
-
-      <!-- Specify the Java type of your custom type. This corresponds to the Converter's <U> type. -->
-      <type>java.util.GregorianCalendar</type>
-
-      <!-- Associate that custom type with your converter. -->
-      <converter>com.example.CalendarConverter</converter>
-    </customType>
-  </customTypes>
-
-  <!-- Then, associate custom types with database columns -->
-  <forcedTypes>
-    <forcedType>
-      <!-- Specify the name of your custom type -->
-      <name>GregorianCalendar</name>
 
       <!-- Add a Java regular expression matching fully-qualified columns. Use the pipe to separate several expressions.
 
@@ -17756,11 +17928,10 @@ public class PostgresJSONGsonBinding implements Binding<Object, JsonElement> {
                             <h3>Registering bindings to the code generator</h3>
 
                             <p>
-                                The above <reference class="org.jooq.Binding"/> implementation intercepts all the interaction on a JDBC level, such that jOOQ will never need to know how to crrectly serialise / deserialise your custom data type. Similar to what we've seen in the previous section about <reference id="custom-data-types" title="how to register Converters to the code generator"/>, we can now register such a binding to the code generator. Note that you will reuse the same types of XML elements (<code>&lt;customType/></code> and <code>&lt;forcedType/></code>):
+                                The above <reference class="org.jooq.Binding"/> implementation intercepts all the interaction on a JDBC level, such that jOOQ will never need to know how to correctly serialise / deserialise your custom data type. Similar to what we've seen in the previous section about <reference id="custom-data-types" title="how to register Converters to the code generator"/>, we can now register such a binding to the code generator. Note that you will reuse the same types of XML elements (<code>&lt;forcedType/></code>):
                             </p>
 
 </html><xml><![CDATA[<database>
-  <!-- Optionally, reuse your configuration via a <customType/>, first -->
   <forcedTypes>
     <forcedType>
 
@@ -18260,7 +18431,7 @@ CREATE TABLE book_to_book_store (
                                 <strong>XML configuration (standalone and Maven)</strong>
                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <database>
       <name>org.jooq.util.ddl.DDLDatabase</name>
@@ -18327,7 +18498,7 @@ CREATE TABLE book_to_book_store (
                                 <strong>XML configuration (standalone and Maven)</strong>
                             </p>
 
-</html><xml><![CDATA[<configuration>
+</html><xml><![CDATA[<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-{codegen-xsd-version}.xsd">
   <generator>
     <name>org.jooq.util.XMLGenerator</name>
   </generator>
@@ -18575,127 +18746,7 @@ org.jooq.util.GenerationTool.generate(
 				</html></content>
 
 				<sections>
-					<section id="jdbc-mocking">
-						<title>JDBC mocking for unit testing</title>
-						<content><html>
-							<p>
-								When writing unit tests for your data access layer, you have probably used some generic mocking tool offered by popular providers like <a href="http://code.google.com/p/mockito/">Mockito</a>, <a href="http://jmock.org/">jmock</a>, <a href="http://mockrunner.sourceforge.net/">mockrunner</a>, or even <a href="http://www.dbunit.org/">DBUnit</a>. With jOOQ, you can take advantage of the built-in JDBC mock API that allows you to emulate a simple database on the JDBC level for precisely those SQL/JDBC use cases supported by jOOQ.
-							</p>
-
-                            <p>
-                                <strong>Disclaimer: </strong> The general idea of mocking a JDBC connection with this jOOQ API is to provide quick workarounds, injection points, etc. using a very simple JDBC abstraction. It is <em>NOT RECOMMENDED</em> to emulate an entire database (including complex state transitions, transactions, locking, etc.) using this mock API. Once you have this requirement, please consider using an actual database instead for integration testing, rather than implementing your test database inside of a <code>MockDataProvider</code>.
-                            </p>
-
-							<h3>Mocking the JDBC API</h3>
-							<p>
-								JDBC is a very complex API. It takes a lot of time to write a useful and correct mock implementation, implementing at least these interfaces:
-							</p>
-							<ul>
-								<li><reference class="java.sql.Connection"/></li>
-								<li><reference class="java.sql.Statement"/></li>
-								<li><reference class="java.sql.PreparedStatement"/></li>
-								<li><reference class="java.sql.CallableStatement"/></li>
-								<li><reference class="java.sql.ResultSet"/></li>
-								<li><reference class="java.sql.ResultSetMetaData"/></li>
-							</ul>
-
-							<p>
-								Optionally, you may even want to implement interfaces, such as <reference class="java.sql.Array"/>, <reference class="java.sql.Blob"/>, <reference class="java.sql.Clob"/>, and many others. In addition to the above, you might need to find a way to simultaneously support incompatible JDBC minor versions, such as 4.0, 4.1
-							</p>
-
-							<h3>Using jOOQ's own mock API</h3>
-							<p>
-								This work is greatly simplified, when using jOOQ's own mock API. The <code>org.jooq.tools.jdbc</code> package contains all the essential implementations for both JDBC 4.0 and 4.1, which are needed to mock JDBC for jOOQ. In order to write mock tests, provide the jOOQ <reference id="dsl-context" title="Configuration"/> with a <reference class="org.jooq.tools.jdbc.MockConnection" title="MockConnection"/>, and implement the <reference class="org.jooq.tools.jdbc.MockDataProvider" title="MockDataProvider"/>:
-							</p>
-
-</html><java><![CDATA[// Initialise your data provider (implementation further down):
-MockDataProvider provider = new MyProvider();
-MockConnection connection = new MockConnection(provider);
-
-// Pass the mock connection to a jOOQ DSLContext:
-DSLContext create = DSL.using(connection, SQLDialect.ORACLE);
-
-// Execute queries transparently, with the above DSLContext:
-Result<BookRecord> result = create.selectFrom(BOOK).where(BOOK.ID.eq(5)).fetch();]]></java><html>
-
-                            <p>
-                                As you can see, the configuration setup is simple. Now, the <code>MockDataProvider</code> acts as your single point of contact with JDBC / jOOQ. It unifies any of these execution modes, transparently:
-                            </p>
-
-                            <ul>
-                                <li>Statements without results</li>
-                                <li>Statements without results but with generated keys</li>
-                                <li>Statements with results</li>
-                                <li>Statements with several results</li>
-                                <li>Batch statements with single queries and multiple bind value sets</li>
-                                <li>Batch statements with multiple queries and no bind values</li>
-                            </ul>
-
-                            <p>
-                                The above are the execution modes supported by jOOQ. Whether you're using any of jOOQ's various fetching modes (e.g. <reference id="pojos" title="pojo fetching"/>, <reference id="lazy-fetching" title="lazy fetching"/>, <reference id="many-fetching" title="many fetching"/>, <reference id="later-fetching" title="later fetching"/>) is irrelevant, as those modes are all built on top of the standard JDBC API.
-                            </p>
-
-                            <h3>Implementing MockDataProvider</h3>
-                            <p>
-                                 Now, here's how to implement <code>MockDataProvider</code>:
-                            </p>
-
-</html><java><![CDATA[public class MyProvider implements MockDataProvider {
-
-    @Override
-    public MockResult[] execute(MockExecuteContext ctx) throws SQLException {
-
-        // You might need a DSLContext to create org.jooq.Result and org.jooq.Record objects
-        DSLContext create = DSL.using(SQLDialect.ORACLE);
-        MockResult[] mock = new MockResult[1];
-
-        // The execute context contains SQL string(s), bind values, and other meta-data
-        String sql = ctx.sql();
-
-        // Exceptions are propagated through the JDBC and jOOQ APIs
-        if (sql.toUpperCase().startsWith("DROP")) {
-            throw new SQLException("Statement not supported: " + sql);
-        }
-
-        // You decide, whether any given statement returns results, and how many
-        else if (sql.toUpperCase().startsWith("SELECT")) {
-
-            // Always return one record
-            Result<Record2<Integer, String>> result = create.newResult(AUTHOR.ID, AUTHOR.LAST_NAME);
-            result.add(create
-                .newRecord(AUTHOR.ID, AUTHOR.LAST_NAME)
-                .values(1, "Orwell"));
-            mock[0] = new MockResult(1, result);
-        }
-
-        // You can detect batch statements easily
-        else if (ctx.batch()) {
-            // [...]
-        }
-
-        return mock;
-    }
-}]]></java><html>
-
-							<p>
-								Essentially, the <reference class="org.jooq.tools.jdbc.MockExecuteContext" title="MockExecuteContext"/> contains all the necessary information for you to decide, what kind of data you should return. The <reference class="org.jooq.tools.jdbc.MockResult" title="MockResult"/> wraps up two pieces of information:
-							</p>
-							<ul>
-							    <li> <reference class="java.sql.Statement" anchor="#getUpdateCount" title="Statement.getUpdateCount()"/>: The number of affected rows</li>
-							    <li> <reference class="java.sql.Statement" anchor="#getResultSet()" title="Statement.getResultSet()"/>: The result set</li>
-							</ul>
-
-							<p>
-								You should return as many <code>MockResult</code> objects as there were query executions (in <reference id="batch-execution" title="batch mode"/>) or results (in <reference id="many-fetching" title="fetch-many mode"/>). Instead of an awkward JDBC <code>ResultSet</code>, however, you can construct a "friendlier" <reference class="org.jooq.Result"/> with your own record types. The jOOQ mock API will use meta data provided with this <code>Result</code> in order to create the necessary JDBC <reference class="java.sql.ResultSetMetaData"/>
-							</p>
-
-							<p>
-								See the <reference class="org.jooq.tools.jdbc.MockDataProvider" title="MockDataProvider Javadoc"/> for a list of rules that you should follow.
-							</p>
-						</html></content>
-					</section>
-
-
+                    <redirect id="jdbc-mocking" redirect-to="mocking-connection"/>
                     <section id="checker-framework">
                         <title>API validation using the Checker Framework</title>
                         <content><html>

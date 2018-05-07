@@ -41,6 +41,7 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
@@ -56,6 +57,7 @@ import static org.jooq.SQLDialect.MYSQL;
 import static org.jooq.SQLDialect.POSTGRES;
 // ...
 import static org.jooq.SQLDialect.SQLITE;
+// ...
 // ...
 // ...
 import static org.jooq.conf.ParamType.INLINED;
@@ -99,6 +101,7 @@ import java.math.BigInteger;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -115,10 +118,12 @@ import java.time.OffsetTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -159,6 +164,7 @@ import org.jooq.tools.StringUtils;
 import org.jooq.tools.jdbc.JDBCUtils;
 import org.jooq.tools.jdbc.MockArray;
 import org.jooq.tools.jdbc.MockResultSet;
+import org.jooq.tools.reflect.Reflect;
 import org.jooq.types.DayToSecond;
 import org.jooq.types.Interval;
 import org.jooq.types.UByte;
@@ -173,12 +179,13 @@ import org.jooq.util.postgres.PostgresUtils;
  */
 public class DefaultBinding<T, U> implements Binding<T, U> {
 
-    static final JooqLogger     log              = JooqLogger.getLogger(DefaultBinding.class);
+    static final JooqLogger                  log                       = JooqLogger.getLogger(DefaultBinding.class);
 
     /**
      * Generated UID
      */
-    private static final long   serialVersionUID = -198499389344950496L;
+    private static final long                serialVersionUID          = -198499389344950496L;
+    private static final EnumSet<SQLDialect> REQUIRE_JDBC_DATE_LITERAL = EnumSet.of(MYSQL);
 
     final AbstractBinding<T, U> delegate;
 
@@ -621,12 +628,13 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
             // [#1125] Also with temporal data types, casting is needed some times
             // [#4338] ... specifically when using JSR-310 types
             // [#1130] TODO type can be null for ARRAY types, etc.
-            else if (POSTGRES == family && (sqlDataType == null || !sqlDataType.isTemporal()))
+            // [#7351] UUID data types need to be cast too
+            else if (POSTGRES == family && (sqlDataType == null || (!sqlDataType.isTemporal() && sqlDataType != SQLDataType.UUID)))
                 sql(ctx, converted);
 
             // [#1727] VARCHAR types should be cast to their actual lengths in some
             // dialects
-            else if ((sqlDataType == SQLDataType.VARCHAR || sqlDataType == SQLDataType.CHAR) && FIREBIRD == family)
+            else if (FIREBIRD == family && (sqlDataType == SQLDataType.VARCHAR || sqlDataType == SQLDataType.CHAR))
                 sqlCast(ctx, converted, dataType, getValueLength((String) converted), 0, 0);
 
 
@@ -635,10 +643,13 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
 
 
+            // [#7379] Most databases cannot cast a bind variable to an enum type
+            else if (POSTGRES != family && EnumType.class.isAssignableFrom(type))
+                sqlCast(ctx, converted, Tools.emulateEnumType((DataType<EnumType>) dataType), dataType.length(), dataType.precision(), dataType.scale());
+
             // In all other cases, the bind variable can be cast normally
-            else {
+            else
                 sqlCast(ctx, converted, dataType, dataType.length(), dataType.precision(), dataType.scale());
-            }
         }
 
         private static final int getValueLength(String string) {
@@ -686,14 +697,12 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
             }
 
             // See if we "should" cast, to stay on the safe side
-            if (shouldCast(ctx, converted)) {
+            if (shouldCast(ctx, converted))
                 sqlCast(ctx, converted);
-            }
 
             // Most RDBMS can infer types for bind values
-            else {
+            else
                 sql(ctx, converted);
-            }
         }
 
         private final void sql(BindingSQLContext<U> ctx, T value) throws SQLException {
@@ -1294,6 +1303,10 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
 
 
+
+
+
+
     static final class DefaultBigDecimalBinding<U> extends AbstractBinding<BigDecimal, U> {
 
         /**
@@ -1654,6 +1667,11 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
 
 
+
+
+
+
+
             else if (ctx.family() == POSTGRES)
                 ctx.render()
                    .sql("E'")
@@ -1835,7 +1853,7 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
                 ctx.render().visit(K_DATE).sql("('").sql(escape(value, ctx.render())).sql("')");
 
             // [#3648] Circumvent a MySQL bug related to date literals
-            else if (ctx.family() == MYSQL)
+            else if (REQUIRE_JDBC_DATE_LITERAL.contains(ctx.family()))
                 ctx.render().sql("{d '").sql(escape(value, ctx.render())).sql("'}");
 
             // Most dialects implement SQL standard date literals
@@ -1955,6 +1973,13 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
         @Override
         final int sqltype(Configuration configuration) {
+
+
+
+
+
+
+
             return Types.DATE;
         }
     }
@@ -2166,14 +2191,13 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
                 render.sql("[]");
         }
 
-        @SuppressWarnings("unchecked")
         static final <E extends EnumType> E getEnumType(Class<? extends E> type, String literal) {
             try {
-                EnumType[] list = Tools.enums(type);
+                E[] list = Tools.enums(type);
 
-                for (EnumType e : list)
+                for (E e : list)
                     if (e.getLiteral().equals(literal))
-                        return (E) e;
+                        return e;
             }
             catch (Exception e) {
                 throw new DataTypeException("Unknown enum literal found : " + literal);
@@ -2341,7 +2365,7 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
 
     private static final Pattern LENIENT_OFFSET_PATTERN = Pattern.compile(
-        "(?:(\\d{4}-\\d{2}-\\d{2})[T ])?(\\d{2}:\\d{2}(:\\d{2})?(?:\\.\\d+)?)(?: +)?(([+-])(\\d)?(\\d)(:\\d{2})?)?");
+        "(?:(\\d{4}-\\d{2}-\\d{2})[T ])?(\\d{2}:\\d{2}(:\\d{2})?(?:\\.\\d+)?)(?: +)?(([+-])?(\\d)?(\\d)(:\\d{2})?)?");
 
     private static final OffsetTime offsetTime(String string) {
         return string == null ? null : OffsetTime.parse(preparse(string, false));
@@ -2372,7 +2396,10 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
                 sb.append(":00");
 
             if (m.group(4) != null) {
-                sb.append(m.group(5));
+                if (m.group(5) != null)
+                    sb.append(m.group(5));
+                else
+                    sb.append('+');
 
                 String group6 = m.group(6);
                 String group8 = m.group(8);
@@ -2433,12 +2460,23 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
         @Override
         final void set0(BindingSetStatementContext<U> ctx, OffsetDateTime value) throws SQLException {
+
+
+
+
+
             ctx.statement().setString(ctx.index(), format(value));
         }
 
         @Override
         final void set0(BindingSetSQLOutputContext<U> ctx, OffsetDateTime value) throws SQLException {
-            // [#6630] TODO support this type
+
+
+
+
+
+
+
             throw new UnsupportedOperationException("Type " + type + " is not supported");
         }
 
@@ -2454,16 +2492,53 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
         @Override
         final OffsetDateTime get0(BindingGetSQLInputContext<U> ctx) throws SQLException {
-            // [#6630] TODO support this type
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             throw new UnsupportedOperationException("Type " + type + " is not supported");
         }
 
         @Override
         final int sqltype(Configuration configuration) {
 
+
+
+
+
+
+
+
+
             // [#5779] Few JDBC drivers support the JDBC 4.2 TIME[STAMP]_WITH_TIMEZONE types.
             return Types.VARCHAR;
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         private static final String format(OffsetDateTime val) {
 
@@ -2542,6 +2617,14 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
         @Override
         final int sqltype(Configuration configuration) {
 
+
+
+
+
+
+
+
+
             // [#5779] Few JDBC drivers support the JDBC 4.2 TIME[STAMP]_WITH_TIMEZONE types.
             return Types.VARCHAR;
         }
@@ -2569,7 +2652,13 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Override
         final void set0(BindingSetStatementContext<U> ctx, Object value) throws SQLException {
-            ((AbstractBinding) binding(value.getClass(), isLob)).set0(ctx, value);
+            AbstractBinding b = (AbstractBinding) binding(value.getClass(), isLob);
+
+            // [#7370] Prevent a stack overflow error on unsupported data types
+            if (b instanceof DefaultOtherBinding)
+                ctx.statement().setObject(ctx.index(), value);
+            else
+                b.set0(ctx, value);
         }
 
         @Override
@@ -2593,7 +2682,7 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
         @Override
         final void set0(BindingSetSQLOutputContext<U> ctx, Object value) throws SQLException {
-            throw new UnsupportedOperationException("Type " + type + " is not supported");
+            throw new DataTypeException("Type " + type + " is not supported");
         }
 
         @Override
@@ -3082,6 +3171,23 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
         @Override
         final String get0(BindingGetResultSetContext<U> ctx) throws SQLException {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             return ctx.resultSet().getString(ctx.index());
         }
 
@@ -3097,6 +3203,13 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
         @Override
         final int sqltype(Configuration configuration) {
+
+
+
+
+
+
+
             return Types.VARCHAR;
         }
     }
@@ -3133,7 +3246,7 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
                 ctx.render().visit(K_TIME).sql("('").sql(escape(value, ctx.render())).sql("')");
 
             // [#3648] Circumvent a MySQL bug related to date literals
-            else if (ctx.family() == MYSQL)
+            else if (REQUIRE_JDBC_DATE_LITERAL.contains(ctx.family()))
                 ctx.render().sql("{t '").sql(escape(value, ctx.render())).sql("'}");
 
 
@@ -3236,7 +3349,7 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
                 ctx.render().visit(K_DATETIME).sql(" '").sql(escape(value, ctx.render())).sql('\'');
 
             // [#3648] Circumvent a MySQL bug related to date literals
-            else if (ctx.family() == MYSQL)
+            else if (REQUIRE_JDBC_DATE_LITERAL.contains(ctx.family()))
                 ctx.render().sql("{ts '").sql(escape(value, ctx.render())).sql("'}");
 
             // Most dialects implement SQL standard timestamp literals
@@ -3592,7 +3705,12 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
 
         @Override
         final int sqltype(Configuration configuration) {
-            return Types.VARCHAR;
+            switch (configuration.family()) {
+                case POSTGRES:
+                    return Types.OTHER;
+                default:
+                    return Types.VARCHAR;
+            }
         }
     }
 
