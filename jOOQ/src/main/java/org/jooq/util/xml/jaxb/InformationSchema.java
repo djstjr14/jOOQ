@@ -551,6 +551,10 @@ public class InformationSchema implements Serializable
 
     @Override
     public boolean equals(Object that) {
+    	boolean objectNull;
+        boolean otherObjectNotNull;
+        boolean EqualWithOther;
+        
         if (this == that) {
             return true;
         }
@@ -561,117 +565,81 @@ public class InformationSchema implements Serializable
             return false;
         }
         InformationSchema other = ((InformationSchema) that);
-        if (catalogs == null) {
-            if (other.catalogs!= null) {
-                return false;
-            }
-        } else {
-            if (!catalogs.equals(other.catalogs)) {
-                return false;
-            }
+        objectNull = catalogs == null;
+        otherObjectNotNull = other.catalogs != null;
+        EqualWithOther = catalogs.equals(other.catalogs);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (schemata == null) {
-            if (other.schemata!= null) {
-                return false;
-            }
-        } else {
-            if (!schemata.equals(other.schemata)) {
-                return false;
-            }
+        objectNull = schemata == null;
+        otherObjectNotNull = other.schemata != null;
+        EqualWithOther = schemata.equals(other.schemata);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (sequences == null) {
-            if (other.sequences!= null) {
-                return false;
-            }
-        } else {
-            if (!sequences.equals(other.sequences)) {
-                return false;
-            }
+        objectNull = sequences == null;
+        otherObjectNotNull = other.sequences != null;
+        EqualWithOther = sequences.equals(other.sequences);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (tables == null) {
-            if (other.tables!= null) {
-                return false;
-            }
-        } else {
-            if (!tables.equals(other.tables)) {
-                return false;
-            }
+        objectNull = tables == null;
+        otherObjectNotNull = other.tables != null;
+        EqualWithOther = tables.equals(other.tables);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (columns == null) {
-            if (other.columns!= null) {
-                return false;
-            }
-        } else {
-            if (!columns.equals(other.columns)) {
-                return false;
-            }
+        objectNull = columns == null;
+        otherObjectNotNull = other.columns != null;
+        EqualWithOther = columns.equals(other.columns);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (tableConstraints == null) {
-            if (other.tableConstraints!= null) {
-                return false;
-            }
-        } else {
-            if (!tableConstraints.equals(other.tableConstraints)) {
-                return false;
-            }
+        objectNull = tableConstraints == null;
+        otherObjectNotNull = other.tableConstraints != null;
+        EqualWithOther = tableConstraints.equals(other.tableConstraints);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (keyColumnUsages == null) {
-            if (other.keyColumnUsages!= null) {
-                return false;
-            }
-        } else {
-            if (!keyColumnUsages.equals(other.keyColumnUsages)) {
-                return false;
-            }
+        objectNull = keyColumnUsages == null;
+        otherObjectNotNull = other.keyColumnUsages != null;
+        EqualWithOther = keyColumnUsages.equals(other.keyColumnUsages);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (referentialConstraints == null) {
-            if (other.referentialConstraints!= null) {
-                return false;
-            }
-        } else {
-            if (!referentialConstraints.equals(other.referentialConstraints)) {
-                return false;
-            }
+        objectNull = referentialConstraints == null;
+        otherObjectNotNull = other.referentialConstraints != null;
+        EqualWithOther = referentialConstraints.equals(other.referentialConstraints);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (indexes == null) {
-            if (other.indexes!= null) {
-                return false;
-            }
-        } else {
-            if (!indexes.equals(other.indexes)) {
-                return false;
-            }
+        objectNull = indexes == null;
+        otherObjectNotNull = other.indexes != null;
+        EqualWithOther = indexes.equals(other.indexes);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (indexColumnUsages == null) {
-            if (other.indexColumnUsages!= null) {
-                return false;
-            }
-        } else {
-            if (!indexColumnUsages.equals(other.indexColumnUsages)) {
-                return false;
-            }
+        objectNull = indexColumnUsages == null;
+        otherObjectNotNull = other.indexColumnUsages != null;
+        EqualWithOther = indexColumnUsages.equals(other.indexColumnUsages);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
-        if (routines == null) {
-            if (other.routines!= null) {
-                return false;
-            }
-        } else {
-            if (!routines.equals(other.routines)) {
-                return false;
-            }
-        }
-        if (parameters == null) {
-            if (other.parameters!= null) {
-                return false;
-            }
-        } else {
-            if (!parameters.equals(other.parameters)) {
-                return false;
-            }
+        objectNull = routines == null;
+        otherObjectNotNull = other.routines != null;
+        EqualWithOther = routines.equals(other.routines);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
+        } 
+        objectNull = parameters == null;
+        otherObjectNotNull = other.parameters != null;
+        EqualWithOther = parameters.equals(other.parameters);
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
+        	return false;
         }
         return true;
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
