@@ -144,15 +144,28 @@ public class PostgresUtils {
         final ByteArrayOutputStream bytes = new ByteArrayOutputStream(hex.length() / 2);
         int hexDigit;
         int byteValue;
-
+        boolean isFinish = false;
+        
         try {
-            while ((hexDigit = input.read()) != -1) {
+        	hexDigit = input.read();
+        	if(hexDigit == -1){
+        		isFinish = true;
+        	}
+            while (!isFinish) {
                 byteValue = (hexValue(hexDigit) << 4);
-                if ((hexDigit = input.read()) == -1) {
+                hexDigit = input.read();
+            	if(hexDigit == -1){
+            		isFinish = true;
+            	}
+                if (isFinish) {
                     break;
                 }
                 byteValue += hexValue(hexDigit);
                 bytes.write(byteValue);
+                hexDigit = input.read();
+            	if(hexDigit == -1){
+            		isFinish = true;
+            	}
             }
         }
 
@@ -169,14 +182,18 @@ public class PostgresUtils {
      * Get the hex value of a <code>char</code> digit
      */
     private static int hexValue(final int hexDigit) {
-        if (hexDigit >= '0' && hexDigit <= '9') {
-            return hexDigit - '0';
+        int hexVal;
+    	if (hexDigit >= '0' && hexDigit <= '9') {
+            hexVal = hexDigit - '0'; 
+    		return hexVal;
         }
         else if (hexDigit >= 'a' && hexDigit <= 'f') {
-            return hexDigit - 'a' + 10;
+        	hexVal = hexDigit - 'a' + 10;
+        	return hexVal;
         }
         else if (hexDigit >= 'A' && hexDigit <= 'F') {
-            return hexDigit - 'A' + 10;
+            hexVal = hexDigit - 'A' + 10; 
+        	return hexVal;
         }
 
         throw new DataTypeException("unknown postgresql character format for hexValue: " + hexDigit);
@@ -189,8 +206,8 @@ public class PostgresUtils {
         if (octalDigit < '0' || octalDigit > '7') {
             throw new DataTypeException("unknown postgresql character format for octalValue: " + octalDigit);
         }
-
-        return octalDigit - '0';
+        int octVal = octalDigit - '0';
+        return octVal;
     }
 
 
@@ -302,7 +319,6 @@ public class PostgresUtils {
                     if (c == open) {
                         state = PG_OBJECT_BEFORE_VALUE;
                     }
-
                     break;
 
                 // Before a new value
