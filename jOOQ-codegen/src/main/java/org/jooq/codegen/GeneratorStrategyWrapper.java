@@ -42,7 +42,6 @@ import static org.jooq.codegen.GenerationUtil.escapeWindowsForbiddenNames;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -256,12 +255,14 @@ class GeneratorStrategyWrapper extends AbstractGeneratorStrategy {
      * class hierarchy of a generated class
      */
     private Set<String> reservedColumns(Class<?> clazz) {
-        if (clazz == null)
+    	final boolean isClazzNull = (clazz == null);
+        if (isClazzNull)
             return Collections.emptySet();
 
         Set<String> result = reservedColumns.get(clazz);
 
-        if (result == null) {
+        final boolean isResultNull = (result == null)
+        if (isResultNull) {
             result = new HashSet<String>();
             reservedColumns.put(clazz, result);
 
@@ -316,7 +317,8 @@ class GeneratorStrategyWrapper extends AbstractGeneratorStrategy {
     @Override
     public String getJavaClassName(Definition definition, Mode mode) {
         String name = getFixedJavaClassName(definition);
-        if (name != null)
+        final boolean isNameNotNull = (name != null);
+        if (isNameNotNull)
             return name;
 
         // [#1150] Intercept Mode.RECORD calls for tables
