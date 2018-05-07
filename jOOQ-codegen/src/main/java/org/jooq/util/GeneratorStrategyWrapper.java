@@ -35,10 +35,10 @@
  *
  *
  */
-package org.jooq.util;
+package org.jooq.codegen;
 
-import static org.jooq.util.GenerationUtil.convertToIdentifier;
-import static org.jooq.util.GenerationUtil.escapeWindowsForbiddenNames;
+import static org.jooq.codegen.GenerationUtil.convertToIdentifier;
+import static org.jooq.codegen.GenerationUtil.escapeWindowsForbiddenNames;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -53,12 +53,20 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jooq.Record;
+import org.jooq.codegen.AbstractGenerator.Language;
 import org.jooq.impl.AbstractRoutine;
 import org.jooq.impl.TableRecordImpl;
 import org.jooq.impl.UDTRecordImpl;
 import org.jooq.impl.UpdatableRecordImpl;
+import org.jooq.meta.AttributeDefinition;
+import org.jooq.meta.CatalogDefinition;
+import org.jooq.meta.ColumnDefinition;
+import org.jooq.meta.Definition;
+import org.jooq.meta.ParameterDefinition;
+import org.jooq.meta.SchemaDefinition;
+import org.jooq.meta.TableDefinition;
+import org.jooq.meta.TypedElementDefinition;
 import org.jooq.tools.StringUtils;
-import org.jooq.util.AbstractGenerator.Language;
 
 /**
  * A wrapper for generator strategies preventing some common compilation errors
@@ -248,12 +256,14 @@ class GeneratorStrategyWrapper extends AbstractGeneratorStrategy {
      * class hierarchy of a generated class
      */
     private Set<String> reservedColumns(Class<?> clazz) {
-        if (clazz == null)
+    	final boolean isClazzNull = (clazz == null);
+        if (isClazzNull)
             return Collections.emptySet();
 
         Set<String> result = reservedColumns.get(clazz);
 
-        if (result == null) {
+        final boolean isResultNull = (result == null)
+        if (isResultNull) {
             result = new HashSet<String>();
             reservedColumns.put(clazz, result);
 
@@ -308,7 +318,8 @@ class GeneratorStrategyWrapper extends AbstractGeneratorStrategy {
     @Override
     public String getJavaClassName(Definition definition, Mode mode) {
         String name = getFixedJavaClassName(definition);
-        if (name != null)
+        final boolean isNameNotNull = (name != null);
+        if (isNameNotNull)
             return name;
 
         // [#1150] Intercept Mode.RECORD calls for tables

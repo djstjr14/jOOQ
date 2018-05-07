@@ -35,11 +35,19 @@
  *
  *
  */
-package org.jooq.util;
+package org.jooq.codegen;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+
+import org.jooq.meta.AttributeDefinition;
+import org.jooq.meta.ColumnDefinition;
+import org.jooq.meta.Definition;
+import org.jooq.meta.ParameterDefinition;
+import org.jooq.meta.RoutineDefinition;
+import org.jooq.meta.TableDefinition;
+import org.jooq.meta.UDTDefinition;
 
 /**
  * A strategy for naming various artefacts generated from {@link Definition}'s
