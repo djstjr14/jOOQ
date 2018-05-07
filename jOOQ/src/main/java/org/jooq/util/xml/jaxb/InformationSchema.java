@@ -486,64 +486,64 @@ public class InformationSchema implements Serializable
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (catalogs!= null) {
+        if (getCatalogs() != null) {
             sb.append("<catalogs>");
-            sb.append(catalogs);
+            sb.append(getCatalogs());
             sb.append("</catalogs>");
         }
-        if (schemata!= null) {
+        if (getSchemata() != null) {
             sb.append("<schemata>");
-            sb.append(schemata);
+            sb.append(getSchemata());
             sb.append("</schemata>");
         }
-        if (sequences!= null) {
+        if (getSequences()!= null) {
             sb.append("<sequences>");
-            sb.append(sequences);
+            sb.append(getSequences());
             sb.append("</sequences>");
         }
-        if (tables!= null) {
+        if (getTables() != null) {
             sb.append("<tables>");
-            sb.append(tables);
+            sb.append(getTables());
             sb.append("</tables>");
         }
-        if (columns!= null) {
+        if (getColumns() != null) {
             sb.append("<columns>");
-            sb.append(columns);
+            sb.append(getColumns());
             sb.append("</columns>");
         }
-        if (tableConstraints!= null) {
+        if (getTableConstraints() != null) {
             sb.append("<tableConstraints>");
-            sb.append(tableConstraints);
+            sb.append(getTableConstraints());
             sb.append("</tableConstraints>");
         }
-        if (keyColumnUsages!= null) {
+        if (getKeyColumnUsages() != null) {
             sb.append("<keyColumnUsages>");
-            sb.append(keyColumnUsages);
+            sb.append(getKeyColumnUsages());
             sb.append("</keyColumnUsages>");
         }
-        if (referentialConstraints!= null) {
+        if (getReferentialConstraints()!= null) {
             sb.append("<referentialConstraints>");
-            sb.append(referentialConstraints);
+            sb.append(getReferentialConstraints());
             sb.append("</referentialConstraints>");
         }
-        if (indexes!= null) {
+        if (getIndexes()!= null) {
             sb.append("<indexes>");
-            sb.append(indexes);
+            sb.append(getIndexes());
             sb.append("</indexes>");
         }
-        if (indexColumnUsages!= null) {
+        if (getIndexColumnUsages()!= null) {
             sb.append("<indexColumnUsages>");
-            sb.append(indexColumnUsages);
+            sb.append(getIndexColumnUsages());
             sb.append("</indexColumnUsages>");
         }
-        if (routines!= null) {
+        if (getRoutines() != null) {
             sb.append("<routines>");
-            sb.append(routines);
+            sb.append(getRoutines());
             sb.append("</routines>");
         }
-        if (parameters!= null) {
+        if (getParameters()!= null) {
             sb.append("<parameters>");
-            sb.append(parameters);
+            sb.append(getParameters());
             sb.append("</parameters>");
         }
         return sb.toString();
@@ -568,73 +568,73 @@ public class InformationSchema implements Serializable
         objectNull = catalogs == null;
         otherObjectNotNull = other.catalogs != null;
         EqualWithOther = catalogs.equals(other.catalogs);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = schemata == null;
         otherObjectNotNull = other.schemata != null;
         EqualWithOther = schemata.equals(other.schemata);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = sequences == null;
         otherObjectNotNull = other.sequences != null;
         EqualWithOther = sequences.equals(other.sequences);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = tables == null;
         otherObjectNotNull = other.tables != null;
         EqualWithOther = tables.equals(other.tables);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = columns == null;
         otherObjectNotNull = other.columns != null;
         EqualWithOther = columns.equals(other.columns);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = tableConstraints == null;
         otherObjectNotNull = other.tableConstraints != null;
         EqualWithOther = tableConstraints.equals(other.tableConstraints);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = keyColumnUsages == null;
         otherObjectNotNull = other.keyColumnUsages != null;
         EqualWithOther = keyColumnUsages.equals(other.keyColumnUsages);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = referentialConstraints == null;
         otherObjectNotNull = other.referentialConstraints != null;
         EqualWithOther = referentialConstraints.equals(other.referentialConstraints);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = indexes == null;
         otherObjectNotNull = other.indexes != null;
         EqualWithOther = indexes.equals(other.indexes);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = indexColumnUsages == null;
         otherObjectNotNull = other.indexColumnUsages != null;
         EqualWithOther = indexColumnUsages.equals(other.indexColumnUsages);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         objectNull = routines == null;
         otherObjectNotNull = other.routines != null;
         EqualWithOther = routines.equals(other.routines);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         } 
         objectNull = parameters == null;
         otherObjectNotNull = other.parameters != null;
         EqualWithOther = parameters.equals(other.parameters);
-        if( (objectNull && otherObjectNotNull) || (!objectNull && !EqualWithOther)) {
+        if( (objectNull && otherObjectNotNull) || !objectNull && !EqualWithOther) {
         	return false;
         }
         return true;
