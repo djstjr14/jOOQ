@@ -191,8 +191,9 @@ public class CSVReader implements Closeable, Iterator<String[]> {
                 return result; // should throw if still pending?
             }
             String[] r = parser.parseLineMulti(nextLine);
+            boolean existResult = (result == null);
             if (r.length > 0) {
-                if (result == null) {
+                if (existResult) {
                     result = r;
                 }
                 else {
@@ -221,7 +222,8 @@ public class CSVReader implements Closeable, Iterator<String[]> {
             this.linesSkiped = true;
         }
         String nextLine = br.readLine();
-        if (nextLine == null) {
+        boolean existNextline = (nextLine == null); 
+        if (existNextline) {
             hasNext = false;
         }
         return hasNext ? nextLine : null;

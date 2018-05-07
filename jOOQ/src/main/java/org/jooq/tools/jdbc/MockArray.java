@@ -112,7 +112,7 @@ public class MockArray<T> implements Array {
 
     @Override
     public ResultSet getResultSet() {
-        return getResultSet0(array);
+        return getMockResultSet(array);
     }
 
     @Override
@@ -122,7 +122,7 @@ public class MockArray<T> implements Array {
 
     @Override
     public ResultSet getResultSet(long index, int count) throws SQLException {
-        return getResultSet0(getArray(index, count));
+        return getMockResultSet(getArray(index, count));
     }
 
     @Override
@@ -131,7 +131,7 @@ public class MockArray<T> implements Array {
     }
 
     @SuppressWarnings("unchecked")
-    private ResultSet getResultSet0(T[] a) {
+    private ResultSet getMockResultSet(T[] a) {
         DSLContext create = DSL.using(dialect);
 
         Field<Long> index = field(name("INDEX"), Long.class);

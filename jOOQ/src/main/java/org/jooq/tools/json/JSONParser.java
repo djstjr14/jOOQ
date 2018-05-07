@@ -64,6 +64,14 @@ public class JSONParser {
     public int getPosition(){
         return lexer.getPosition();
     }
+    
+    public int getStatus() {
+    	return status;
+    }
+    
+    public Yytoken getToken() {
+    	return token;
+    }
 
     public Object parse(String s) throws ParseException{
         return parse(s, (ContainerFactory)null);
@@ -110,22 +118,22 @@ public class JSONParser {
         try{
             do{
                 nextToken();
-                switch(status){
+                switch(getStatus()){
                     case S_INIT:
-                        switch(token.type){
+                        switch(getToken().type){
                             case Yytoken.TYPE_VALUE:
                                 status=S_IN_FINISHED_VALUE;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 valueStack.addFirst(token.value);
                                 break;
                             case Yytoken.TYPE_LEFT_BRACE:
                                 status=S_IN_OBJECT;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 valueStack.addFirst(createObjectContainer(containerFactory));
                                 break;
                             case Yytoken.TYPE_LEFT_SQUARE:
                                 status=S_IN_ARRAY;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 valueStack.addFirst(createArrayContainer(containerFactory));
                                 break;
                             default:
@@ -134,21 +142,21 @@ public class JSONParser {
                         break;
 
                     case S_IN_FINISHED_VALUE:
-                        if(token.type==Yytoken.TYPE_EOF)
+                        if(getToken().type==Yytoken.TYPE_EOF)
                             return valueStack.removeFirst();
                         else
-                            throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+                            throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, getToken());
 
                     case S_IN_OBJECT:
-                        switch(token.type){
+                        switch(getToken().type){
                             case Yytoken.TYPE_COMMA:
                                 break;
                             case Yytoken.TYPE_VALUE:
-                                if(token.value instanceof String){
-                                    String key=(String)token.value;
+                                if(getToken().value instanceof String){
+                                    String key=(String)getToken().value;
                                     valueStack.addFirst(key);
                                     status=S_PASSED_PAIR_KEY;
-                                    statusStack.addFirst(new Integer(status));
+                                    statusStack.addFirst(new Integer(getStatus()));
                                 }
                                 else{
                                     status=S_IN_ERROR;
@@ -171,14 +179,14 @@ public class JSONParser {
                         break;
 
                     case S_PASSED_PAIR_KEY:
-                        switch(token.type){
+                        switch(getToken().type){
                             case Yytoken.TYPE_COLON:
                                 break;
                             case Yytoken.TYPE_VALUE:
                                 statusStack.removeFirst();
                                 String key=(String)valueStack.removeFirst();
                                 Map parent=(Map)valueStack.getFirst();
-                                parent.put(key,token.value);
+                                parent.put(key,getToken().value);
                                 status=peekStatus(statusStack);
                                 break;
                             case Yytoken.TYPE_LEFT_SQUARE:
@@ -188,7 +196,7 @@ public class JSONParser {
                                 List newArray=createArrayContainer(containerFactory);
                                 parent.put(key,newArray);
                                 status=S_IN_ARRAY;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 valueStack.addFirst(newArray);
                                 break;
                             case Yytoken.TYPE_LEFT_BRACE:
@@ -198,7 +206,7 @@ public class JSONParser {
                                 Map newObject=createObjectContainer(containerFactory);
                                 parent.put(key,newObject);
                                 status=S_IN_OBJECT;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 valueStack.addFirst(newObject);
                                 break;
                             default:
@@ -207,12 +215,12 @@ public class JSONParser {
                         break;
 
                     case S_IN_ARRAY:
-                        switch(token.type){
+                        switch(getToken().type){
                             case Yytoken.TYPE_COMMA:
                                 break;
                             case Yytoken.TYPE_VALUE:
                                 List val=(List)valueStack.getFirst();
-                                val.add(token.value);
+                                val.add(getToken().value);
                                 break;
                             case Yytoken.TYPE_RIGHT_SQUARE:
                                 if(valueStack.size()>1){
@@ -229,7 +237,7 @@ public class JSONParser {
                                 Map newObject=createObjectContainer(containerFactory);
                                 val.add(newObject);
                                 status=S_IN_OBJECT;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 valueStack.addFirst(newObject);
                                 break;
                             case Yytoken.TYPE_LEFT_SQUARE:
@@ -237,7 +245,7 @@ public class JSONParser {
                                 List newArray=createArrayContainer(containerFactory);
                                 val.add(newArray);
                                 status=S_IN_ARRAY;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 valueStack.addFirst(newArray);
                                 break;
                             default:
@@ -245,23 +253,23 @@ public class JSONParser {
                         }//inner switch
                         break;
                     case S_IN_ERROR:
-                        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+                        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, getToken());
                 }//switch
-                if(status==S_IN_ERROR){
-                    throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+                if(getStatus()==S_IN_ERROR){
+                    throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, getToken());
                 }
-            }while(token.type!=Yytoken.TYPE_EOF);
+            }while(getToken().type!=Yytoken.TYPE_EOF);
         }
         catch(IOException ie){
             throw ie;
         }
 
-        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, getToken());
     }
 
     private void nextToken() throws ParseException, IOException{
         token = lexer.yylex();
-        if(token == null)
+        if(getToken() == null)
             token = new Yytoken(Yytoken.TYPE_EOF, null);
     }
 
@@ -337,26 +345,26 @@ public class JSONParser {
 
         try{
             do{
-                switch(status){
+                switch(getStatus()){
                     case S_INIT:
                         contentHandler.startJSON();
                         nextToken();
-                        switch(token.type){
+                        switch(getToken().type){
                             case Yytoken.TYPE_VALUE:
                                 status=S_IN_FINISHED_VALUE;
-                                statusStack.addFirst(new Integer(status));
-                                if(!contentHandler.primitive(token.value))
+                                statusStack.addFirst(new Integer(getStatus()));
+                                if(!contentHandler.primitive(getToken().value))
                                     return;
                                 break;
                             case Yytoken.TYPE_LEFT_BRACE:
                                 status=S_IN_OBJECT;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 if(!contentHandler.startObject())
                                     return;
                                 break;
                             case Yytoken.TYPE_LEFT_SQUARE:
                                 status=S_IN_ARRAY;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 if(!contentHandler.startArray())
                                     return;
                                 break;
@@ -367,26 +375,26 @@ public class JSONParser {
 
                     case S_IN_FINISHED_VALUE:
                         nextToken();
-                        if(token.type==Yytoken.TYPE_EOF){
+                        if(getToken().type==Yytoken.TYPE_EOF){
                             contentHandler.endJSON();
                             status = S_END;
                             return;
                         }
                         else{
                             status = S_IN_ERROR;
-                            throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+                            throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, getToken());
                         }
 
                     case S_IN_OBJECT:
                         nextToken();
-                        switch(token.type){
+                        switch(getToken().type){
                             case Yytoken.TYPE_COMMA:
                                 break;
                             case Yytoken.TYPE_VALUE:
-                                if(token.value instanceof String){
-                                    String key=(String)token.value;
+                                if(getToken().value instanceof String){
+                                    String key=(String)getToken().value;
                                     status=S_PASSED_PAIR_KEY;
-                                    statusStack.addFirst(new Integer(status));
+                                    statusStack.addFirst(new Integer(getStatus()));
                                     if(!contentHandler.startObjectEntry(key))
                                         return;
                                 }
@@ -413,13 +421,13 @@ public class JSONParser {
 
                     case S_PASSED_PAIR_KEY:
                         nextToken();
-                        switch(token.type){
+                        switch(getToken().type){
                             case Yytoken.TYPE_COLON:
                                 break;
                             case Yytoken.TYPE_VALUE:
                                 statusStack.removeFirst();
                                 status=peekStatus(statusStack);
-                                if(!contentHandler.primitive(token.value))
+                                if(!contentHandler.primitive(getToken().value))
                                     return;
                                 if(!contentHandler.endObjectEntry())
                                     return;
@@ -428,7 +436,7 @@ public class JSONParser {
                                 statusStack.removeFirst();
                                 statusStack.addFirst(new Integer(S_IN_PAIR_VALUE));
                                 status=S_IN_ARRAY;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 if(!contentHandler.startArray())
                                     return;
                                 break;
@@ -436,7 +444,7 @@ public class JSONParser {
                                 statusStack.removeFirst();
                                 statusStack.addFirst(new Integer(S_IN_PAIR_VALUE));
                                 status=S_IN_OBJECT;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 if(!contentHandler.startObject())
                                     return;
                                 break;
@@ -458,11 +466,11 @@ public class JSONParser {
 
                     case S_IN_ARRAY:
                         nextToken();
-                        switch(token.type){
+                        switch(getToken().type){
                             case Yytoken.TYPE_COMMA:
                                 break;
                             case Yytoken.TYPE_VALUE:
-                                if(!contentHandler.primitive(token.value))
+                                if(!contentHandler.primitive(getToken().value))
                                     return;
                                 break;
                             case Yytoken.TYPE_RIGHT_SQUARE:
@@ -478,13 +486,13 @@ public class JSONParser {
                                 break;
                             case Yytoken.TYPE_LEFT_BRACE:
                                 status=S_IN_OBJECT;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 if(!contentHandler.startObject())
                                     return;
                                 break;
                             case Yytoken.TYPE_LEFT_SQUARE:
                                 status=S_IN_ARRAY;
-                                statusStack.addFirst(new Integer(status));
+                                statusStack.addFirst(new Integer(getStatus()));
                                 if(!contentHandler.startArray())
                                     return;
                                 break;
@@ -497,12 +505,12 @@ public class JSONParser {
                         return;
 
                     case S_IN_ERROR:
-                        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+                        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, getToken());
                 }//switch
                 if(status==S_IN_ERROR){
-                    throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+                    throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, getToken());
                 }
-            }while(token.type!=Yytoken.TYPE_EOF);
+            }while(getToken().type!=Yytoken.TYPE_EOF);
         }
         catch(IOException ie){
             status = S_IN_ERROR;
@@ -522,6 +530,6 @@ public class JSONParser {
         }
 
         status = S_IN_ERROR;
-        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, getToken());
     }
 }

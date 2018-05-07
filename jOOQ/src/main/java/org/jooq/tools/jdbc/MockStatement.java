@@ -149,7 +149,7 @@ public class MockStatement extends JDBC41Statement implements CallableStatement 
     }
 
     private void checkNotClosed() throws SQLException {
-        if (isClosed) {
+        if (isClosed()) {
             throw new SQLException("Connection is already closed");
         }
     }
