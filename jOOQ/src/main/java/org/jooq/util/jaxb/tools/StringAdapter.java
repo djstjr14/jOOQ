@@ -60,29 +60,41 @@ import org.jooq.tools.StringUtils;
 public class StringAdapter extends XmlAdapter<String, String> {
 
     private static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.*?)\\}");
-
+    
+    private boolean isNullString(String v) {
+    	return v == null;
+    }
+    private String result, group0, group1;
+    private void initResult(String vTrim) {result = vTrim;}
+    private String getResult() {return result;}
+    private void initGroup0(String matcherGroup0) {group0 = matcherGroup0;}
+    private void initGroup1(String matcherGroup1) {group1 = matcherGroup1;}
+    private String getGroup0() {return group0;}
+    private String getGroup1() {return group1;}
+    
     @Override
     public final String unmarshal(String v) throws Exception {
-        if (v == null)
+        if (isNullString(v))
             return null;
 
-        String result = v.trim();
+        initResult(v.trim());
 
-        Matcher matcher = PROPERTY_PATTERN.matcher(result);
+        Matcher matcher = PROPERTY_PATTERN.matcher(getResult());
         while (matcher.find()) {
-            String group0 = matcher.group(0);
-            String group1 = matcher.group(1);
+            initGroup0(matcher.group(0));
+            initGroup1(matcher.group(1));
 
-            result = StringUtils.replace(result, group0, System.getProperty(group1, group0));
+            initResult(StringUtils.replace(getResult(), getGroup0(), System.getProperty(getGroup1(), getGroup0())));
         }
 
-        return result;
+        return getResult();
     }
 
     @Override
     public final String marshal(String v) throws Exception {
-        if (v == null)
+        if (isNullString(v))
             return null;
-        return v.trim();
+        initResult(v.trim());
+        return getResult();
     }
 }

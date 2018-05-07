@@ -463,7 +463,7 @@ public class MySQLDSL extends DSL {
      * href="dev.mysql.com/doc/refman/5.5/en/enum.html">dev.mysql.com/doc/
      * refman/5.5/en/enum.html</a> for more details about MySQL enum types
      */
-    public static <E extends java.lang.Enum<E> & org.jooq.EnumType> E enumType(Class<E> type, int index) {
+   public static <E extends java.lang.Enum<E> & org.jooq.EnumType> E enumType(Class<E> type, int index) {
         if (index <= 0) {
             return null;
         }
