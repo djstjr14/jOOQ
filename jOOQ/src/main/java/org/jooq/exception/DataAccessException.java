@@ -86,11 +86,14 @@ public class DataAccessException extends RuntimeException {
      * {@link SQLException}.
      */
     public String sqlState() {
-        SQLException e = getCause(SQLException.class);
-        if (e != null)
-            return e.getSQLState();
+        SQLException sqlExeption = getCause(SQLException.class);
+        String NoSQLExceiption = "00000";
+        boolean isSQLExeption = (sqlExeption == null);
+        
+        if (isSQLExeption)
+            return sqlExeption.getSQLState();
 
-        return "00000";
+        return NoSQLExceiption;
     }
 
     /**
@@ -99,9 +102,11 @@ public class DataAccessException extends RuntimeException {
      * caused by a {@link SQLException}.
      */
     public SQLStateClass sqlStateClass() {
-        SQLException e = getCause(SQLException.class);
-        if (e != null)
-            return SQLStateClass.fromCode(e.getSQLState());
+        SQLException sqlExeption = getCause(SQLException.class);
+        boolean isSQLExeption = (sqlExeption == null);
+        
+        if (isSQLExeption)
+            return SQLStateClass.fromCode(sqlExeption.getSQLState());
 
         return SQLStateClass.NONE;
     }
@@ -112,9 +117,11 @@ public class DataAccessException extends RuntimeException {
      * caused by a {@link SQLException}.
      */
     public SQLStateSubclass sqlStateSubclass() {
-        SQLException e = getCause(SQLException.class);
-        if (e != null)
-            return SQLStateSubclass.fromCode(e.getSQLState());
+        SQLException sqlExeption = getCause(SQLException.class);
+        boolean isSQLExeption = (sqlExeption == null);
+        
+        if (isSQLExeption)
+            return SQLStateSubclass.fromCode(sqlExeption.getSQLState());
 
         return SQLStateSubclass.NONE;
     }
@@ -130,24 +137,29 @@ public class DataAccessException extends RuntimeException {
      */
     @SuppressWarnings("unchecked")
     public <T extends Throwable> T getCause(Class<? extends T> type) {
-        Throwable next = getCause();
-        Throwable prev;
+        Throwable nextFindCause = getCause();
+        return FindRootCause(type, nextFindCause);
+    }
 
+	public <T extends Throwable> T FindRootCause(Class<? extends T> type, Throwable nextFindCause) {
+		Throwable prevFindCause;
+		boolean isNextFindCause = (nextFindCause == null);
+        
         for (int i = 0; i < maxCauseLookups; i++) {
-            if (next == null)
+            if (isNextFindCause)
                 return null;
 
-            if (type.isInstance(next))
-                return (T) next;
+            if (type.isInstance(nextFindCause))
+                return (T) nextFindCause;
 
-            prev = next;
-            next = next.getCause();
+            prevFindCause = nextFindCause;
+            nextFindCause = nextFindCause.getCause();
 
             // Don't trust exceptions to respect the default behaviour of Throwable.getCause()
-            if (prev == next)
+            if (prevFindCause == nextFindCause)
                 return null;
         }
 
         return null;
-    }
+	}
 }
