@@ -1,13 +1,4 @@
-
-
-
-
-
-
-
-
 package org.jooq.conf;
-
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlType;
 

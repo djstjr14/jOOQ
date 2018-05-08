@@ -117,26 +117,19 @@ public class JDBCUtils {
 
         if (connection != null) {
             try {
-                DatabaseMetaData m = connection.getMetaData();
-
-
-
-
-
-
-
-                String url = m.getURL();
+                DatabaseMetaData aDatabaseMetaData = connection.getMetaData();
+                String url = aDatabaseMetaData.getURL();
                 int majorVersion = 0;
                 int minorVersion = 0;
 
                 // [#6814] Better play safe with JDBC API
                 try {
-                    majorVersion = m.getDatabaseMajorVersion();
+                    majorVersion = aDatabaseMetaData.getDatabaseMajorVersion();
                 }
                 catch (SQLException ignore) {}
 
                 try {
-                    minorVersion = m.getDatabaseMinorVersion();
+                    minorVersion = aDatabaseMetaData.getDatabaseMinorVersion();
                 }
                 catch (SQLException ignore) {}
 
@@ -161,14 +154,6 @@ public class JDBCUtils {
             return dialect;
 
         switch (dialect) {
-
-
-
-
-
-
-
-
             case POSTGRES:
                 return postgresDialect(majorVersion, minorVersion);
             case MYSQL:
@@ -179,45 +164,6 @@ public class JDBCUtils {
 
         return dialect;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static final SQLDialect postgresDialect(int majorVersion, int minorVersion) {
         if (majorVersion < 9)
@@ -264,7 +210,6 @@ public class JDBCUtils {
         if (url == null) {
             return DEFAULT;
         }
-
         // The below list might not be accurate or complete. Feel free to
         // contribute fixes related to new / different JDBC driver configurations
 
@@ -272,16 +217,6 @@ public class JDBCUtils {
         //         by inserting their names into the JDBC URL, e.g. jdbc:tc:mysql://...
         //         This is why we no longer check for a URL to start with jdbc:mysql:
         //         but to simply contain :mysql:
-
-
-
-
-
-
-
-
-
-
         else if (url.contains(":cubrid:")) {
             return CUBRID;
         }
@@ -313,38 +248,6 @@ public class JDBCUtils {
             return SQLITE;
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         return DEFAULT;
     }
 
@@ -371,31 +274,6 @@ public class JDBCUtils {
                 return "org.postgresql.Driver";
             case SQLITE:
                 return "org.sqlite.JDBC";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         }
 
         return "java.sql.Driver";
@@ -551,7 +429,8 @@ public class JDBCUtils {
      *         {@link SQLInput#wasNull()} is <code>true</code>
      */
     public static final <T> T wasNull(SQLInput stream, T value) throws SQLException {
-        return (value == null || stream.wasNull()) ? null : value;
+    	boolean isStreamNull = (stream.wasNull());
+        return (value == null || isStreamNull) ? null : value;
     }
 
     /**
@@ -566,7 +445,8 @@ public class JDBCUtils {
      *         {@link SQLInput#wasNull()} is <code>true</code>
      */
     public static final <T extends Number> T wasNull(SQLInput stream, T value) throws SQLException {
-        return (value == null || (value.intValue() == 0 && stream.wasNull())) ? null : value;
+    	boolean isStreamNullAndValueZero = (value.intValue() == 0 && stream.wasNull());
+        return (value == null || isStreamNullAndValueZero) ? null : value;
     }
 
     /**
@@ -581,7 +461,8 @@ public class JDBCUtils {
      *         {@link SQLInput#wasNull()} is <code>true</code>
      */
     public static final Boolean wasNull(SQLInput stream, Boolean value) throws SQLException {
-        return (value == null || (value.booleanValue() == false && stream.wasNull())) ? null : value;
+    	boolean isStreamNullAndValueFalse = (value.booleanValue() == false && stream.wasNull());
+        return (value == null || isStreamNullAndValueFalse) ? null : value;
     }
 
     /**
@@ -596,7 +477,8 @@ public class JDBCUtils {
      *         {@link ResultSet#wasNull()} is <code>true</code>
      */
     public static final <T> T wasNull(ResultSet rs, T value) throws SQLException {
-        return (value == null || rs.wasNull()) ? null : value;
+    	boolean isRsNull = rs.wasNull();
+        return (value == null || isRsNull) ? null : value;
     }
 
     /**
@@ -611,7 +493,8 @@ public class JDBCUtils {
      *         {@link ResultSet#wasNull()} is <code>true</code>
      */
     public static final <T extends Number> T wasNull(ResultSet rs, T value) throws SQLException {
-        return (value == null || (value.intValue() == 0 && rs.wasNull())) ? null : value;
+    	boolean isRsNullAndValueZero = (value.intValue() == 0 && rs.wasNull());
+        return (value == null || isRsNullAndValueZero) ? null : value;
     }
 
     /**
@@ -626,7 +509,8 @@ public class JDBCUtils {
      *         {@link ResultSet#wasNull()} is <code>true</code>
      */
     public static final Boolean wasNull(ResultSet rs, Boolean value) throws SQLException {
-        return (value == null || (value.booleanValue() == false && rs.wasNull())) ? null : value;
+    	boolean isRsNullAndValueFalse = (value.booleanValue() == false && rs.wasNull());
+        return (value == null || isRsNullAndValueFalse) ? null : value;
     }
 
     /**
@@ -641,7 +525,8 @@ public class JDBCUtils {
      *         {@link CallableStatement#wasNull()} is <code>true</code>
      */
     public static final <T> T wasNull(CallableStatement statement, T value) throws SQLException {
-        return (value == null || statement.wasNull()) ? null : value;
+    	boolean isStatementNull = (statement.wasNull());
+        return (value == null || isStatementNull) ? null : value;
     }
 
     /**
@@ -656,7 +541,8 @@ public class JDBCUtils {
      *         {@link CallableStatement#wasNull()} is <code>true</code>
      */
     public static final <T extends Number> T wasNull(CallableStatement statement, T value) throws SQLException {
-        return (value == null || (value.intValue() == 0 && statement.wasNull())) ? null : value;
+    	boolean isStatementNullAndValueZero = (value.intValue() == 0 && statement.wasNull());
+        return (value == null || isStatementNullAndValueZero) ? null : value;
     }
 
     /**
@@ -671,7 +557,8 @@ public class JDBCUtils {
      *         {@link CallableStatement#wasNull()} is <code>true</code>
      */
     public static final Boolean wasNull(CallableStatement statement, Boolean value) throws SQLException {
-        return (value == null || (value.booleanValue() == false && statement.wasNull())) ? null : value;
+    	boolean isStatementNullAndValueFalse = (value.booleanValue() == false && statement.wasNull());
+        return (value == null || isStatementNullAndValueFalse) ? null : value;
     }
 
     /**

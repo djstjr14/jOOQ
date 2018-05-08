@@ -45,6 +45,7 @@ import static org.jooq.Clause.CONDITION_NOT_BETWEEN;
 import static org.jooq.Clause.CONDITION_NOT_BETWEEN_SYMMETRIC;
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
@@ -57,6 +58,7 @@ import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
 import static org.jooq.SQLDialect.SQLITE;
+// ...
 // ...
 // ...
 // ...
@@ -88,7 +90,7 @@ final class BetweenCondition<T> extends AbstractCondition implements BetweenAndS
     private static final Clause[]            CLAUSES_BETWEEN_SYMMETRIC     = { CONDITION, CONDITION_BETWEEN_SYMMETRIC };
     private static final Clause[]            CLAUSES_NOT_BETWEEN           = { CONDITION, CONDITION_NOT_BETWEEN };
     private static final Clause[]            CLAUSES_NOT_BETWEEN_SYMMETRIC = { CONDITION, CONDITION_NOT_BETWEEN_SYMMETRIC };
-    private static final EnumSet<SQLDialect> SUPPORTS_SYMMETRIC            = EnumSet.of(CUBRID, DERBY, FIREBIRD, H2, MARIADB, MYSQL, SQLITE);
+    private static final EnumSet<SQLDialect> NO_SUPPORT_SYMMETRIC          = EnumSet.of(CUBRID, DERBY, FIREBIRD, H2, MARIADB, MYSQL, SQLITE);
 
     private final boolean                    symmetric;
     private final boolean                    not;
@@ -115,9 +117,8 @@ final class BetweenCondition<T> extends AbstractCondition implements BetweenAndS
             this.maxValue = nullSafe(f, field.getDataType());
             return this;
         }
-        else {
+        else
             return super.and(f);
-        }
     }
 
     @Override
@@ -131,14 +132,12 @@ final class BetweenCondition<T> extends AbstractCondition implements BetweenAndS
     }
 
     private final QueryPartInternal delegate(Configuration configuration) {
-        if (symmetric && SUPPORTS_SYMMETRIC.contains(configuration.family())) {
+        if (symmetric && NO_SUPPORT_SYMMETRIC.contains(configuration.family()))
             return not
                 ? (QueryPartInternal) field.notBetween(minValue, maxValue).and(field.notBetween(maxValue, minValue))
                 : (QueryPartInternal) field.between(minValue, maxValue).or(field.between(maxValue, minValue));
-        }
-        else {
+        else
             return new Native();
-        }
     }
 
     private class Native extends AbstractQueryPart {

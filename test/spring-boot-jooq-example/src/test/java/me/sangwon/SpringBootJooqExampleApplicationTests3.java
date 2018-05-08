@@ -16,7 +16,7 @@ import java.util.NoSuchElementException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class SpringBootJooqExampleApplicationTests {
+public class SpringBootJooqExampleApplicationTests3 {
 
 	@Autowired
 	private CustomerRepository customerRepository;
@@ -68,7 +68,7 @@ public class SpringBootJooqExampleApplicationTests {
 	@Test
 	public void removeGtTest2_2() {
 		final CustomerDTO customerDTO = customerRepository.findOne(0).get();
-		assertThat(customerDTO.getName()).isEqualTo("test");
+		assertThat(customerDTO.getName()).isEqualTo("test0");
 	}
 	@Test
 	public void modifyTest() {
