@@ -51,21 +51,7 @@ implements Serializable, Cloneable{
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		if (input!= null) {
-			sb.append("<input>");
-			sb.append(input);
-			sb.append("</input>");
-		}
-		if (inputExpression!= null) {
-			sb.append("<inputExpression>");
-			sb.append(inputExpression);
-			sb.append("</inputExpression>");
-		}
-		if (output!= null) {
-			sb.append("<output>");
-			sb.append(output);
-			sb.append("</output>");
-		}
+		System.out.println("MappedTable:toString Success");
 		return sb.toString();
 	}
 
