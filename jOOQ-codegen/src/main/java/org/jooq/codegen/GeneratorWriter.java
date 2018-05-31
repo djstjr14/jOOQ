@@ -79,7 +79,7 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
 
     private final File           file;
     private final String         encoding;
-    private final StringBuilder  sb;
+    private final StringBuilder  strBulider;
     private int                  indentTabs;
     private String               tabString    = "    ";
     private boolean              newline      = true;
@@ -93,10 +93,10 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
 
         this.file = file;
         this.encoding = encoding;
-        this.sb = new StringBuilder();
+        this.strBulider = new StringBuilder();
     }
 
-    public void tabString(String string) {
+    public void setTabString(String string) {
         this.tabString = string;
     }
 
@@ -126,12 +126,13 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
     public W print(String string, Object... args) {
         string = string.replaceAll("\t", tabString);
 
-        if (newline && indentTabs > 0) {
-            for (int i = 0; i < indentTabs; i++)
-                sb.append(tabString);
+        
+        if (newline && getIndentTabs() > 0) {
+            for (int i = 0; i < getIndentTabs(); i++)
+                strBulider.append(tabString);
 
             newline = false;
-            indentTabs = 0;
+            setIndentTabs(0);
         }
 
         if (args.length > 0) {
@@ -191,10 +192,10 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
                 translated = new ArrayList<Object>();
             }
 
-            sb.append(String.format(string, translated.toArray()));
+            strBulider.append(String.format(string, translated.toArray()));
         }
         else {
-            sb.append(string);
+            strBulider.append(string);
         }
 
         return (W) this;
@@ -204,8 +205,8 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
     public W println() {
 
         // Don't add empty lines at the beginning of files
-        if (sb.length() > 0) {
-            sb.append("\n");
+        if (strBulider.length() > 0) {
+            strBulider.append("\n");
             newline = true;
         }
 
@@ -242,12 +243,16 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
         return (W) this;
     }
 
-    public int tab() {
+    public int getIndentTabs() {
         return indentTabs;
+    }
+    
+    public void setIndentTabs(int arg){
+    	indentTabs = arg;
     }
 
     public boolean close() {
-        String newContent = beforeClose(sb.toString());
+        String newContent = beforeClose(strBulider.toString());
 
         // [#4626] Don't write empty files
         if (StringUtils.isBlank(newContent))
@@ -266,8 +271,10 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
                         return name.equalsIgnoreCase(file.getName()) && !name.equals(file.getName());
                     }
                 });
-
-                if (list != null && list.length > 0)
+                
+                final boolean isListNotNull = (list != null);
+                final boolean isLengthBiggerThanZero = (list.length > 0);
+                if (isListNotNull && isLengthBiggerThanZero)
                     file.delete();
                 else {
                     RandomAccessFile old = null;
@@ -279,13 +286,15 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
                         oldContent = new String(oldBytes, encoding());
                     }
                     finally {
-                        if (old != null)
+                    	final boolean isOldNotNull = (old != null);
+                        if (isOldNotNull)
                             old.close();
                     }
                 }
             }
-
-            if (oldContent == null || !oldContent.equals(newContent)) {
+            final boolean isOldContentNuLL = (oldContent == null);
+            final boolean isOldContentEqualNewContent = (!oldContent.equals(newContent));
+            if (isOldContentNuLL || isOldContentEqualNewContent) {
                 PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), encoding()));
 
                 writer.append(newContent);

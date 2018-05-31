@@ -225,7 +225,7 @@ public final class SettingsTools {
      * Return <code>timeout</code> if it is not <code>0</code>, or the specified
      * {@link Settings#getQueryTimeout()}.
      */
-    public static final int getQueryTimeout(int timeout, Settings settings) {
+    public static final int getQueryTimeout(int timeout, Settings settings) { //**
         return timeout != 0
              ? timeout
              : settings.getQueryTimeout() != null
@@ -263,8 +263,8 @@ public final class SettingsTools {
      */
     public static final int getFetchServerOutputSize(int fetchServerOutputSize, Settings settings) {
         return fetchServerOutputSize != 0
-             ? fetchServerOutputSize
-             : settings.getFetchServerOutputSize() != null
+        	 ? fetchServerOutputSize
+        	 : settings.getFetchServerOutputSize() != null
              ? settings.getFetchServerOutputSize()
              : 0;
     }

@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 package org.jooq.conf;
 
 import javax.xml.bind.annotation.XmlEnum;
@@ -43,5 +35,4 @@ public enum BackslashEscaping {
     public static BackslashEscaping fromValue(String v) {
         return valueOf(v);
     }
-
 }

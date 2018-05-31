@@ -139,7 +139,13 @@ final class DDL {
     final Queries queries(Table<?>... tables) {
         List<Query> queries = new ArrayList<Query>();
 
-        for (Table<?> table : tables) {
+        ProcessingOnTable(queries, tables);
+
+        return ctx.queries(queries);
+    }
+
+	public void ProcessingOnTable(List<Query> queries, Table<?>... tables) {
+		for (Table<?> table : tables) {
             if (flags.contains(TABLE))
                 queries.add(createTable(table));
             else
@@ -147,14 +153,18 @@ final class DDL {
 
             queries.addAll(commentOn(table));
         }
-
-        return ctx.queries(queries);
-    }
+	}
 
     private List<Query> commentOn(Table<?> table) {
         List<Query> result = new ArrayList<Query>();
 
-        if (flags.contains(COMMENT)) {
+        ProccessingOnComment(table, result);
+
+        return result;
+    }
+
+	public void ProccessingOnComment(Table<?> table, List<Query> result) {
+		if (flags.contains(COMMENT)) {
             String tComment = table.getComment();
 
             if (!StringUtils.isEmpty(tComment))
@@ -167,14 +177,18 @@ final class DDL {
                     result.add(ctx.commentOnColumn(field).is(fComment));
             }
         }
-
-        return result;
-    }
+	}
 
     final Queries queries(Schema schema) {
         List<Query> queries = new ArrayList<Query>();
 
-        if (flags.contains(SCHEMA) && !StringUtils.isBlank(schema.getName()))
+        ProcessingOnConstraint(schema, queries);
+
+        return ctx.queries(queries);
+    }
+
+	public void ProcessingOnConstraint(Schema schema, List<Query> queries) {
+		if (flags.contains(SCHEMA) && !StringUtils.isBlank(schema.getName()))
             queries.add(ctx.createSchema(schema.getName()));
 
         if (flags.contains(TABLE)) {
@@ -211,9 +225,7 @@ final class DDL {
         if (flags.contains(COMMENT))
             for (Table<?> table : schema.getTables())
                 queries.addAll(commentOn(table));
-
-        return ctx.queries(queries);
-    }
+	}
 
     final Queries queries(Catalog catalog) {
         List<Query> queries = new ArrayList<Query>();

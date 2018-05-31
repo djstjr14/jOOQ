@@ -574,18 +574,6 @@ public class JavaGenerator extends AbstractGenerator {
             generateRoutines(schema);
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
         // XXX [#651] Refactoring-cursor
         watch.splitInfo("Generation finished: " + schema.getQualifiedName());
         log.info("");
@@ -616,90 +604,6 @@ public class JavaGenerator extends AbstractGenerator {
             return true;
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private boolean hasTableValuedFunctions(SchemaDefinition schema) {
         for (TableDefinition table : database.getTables(schema)) {
@@ -2240,103 +2144,6 @@ public class JavaGenerator extends AbstractGenerator {
 
     protected void generateArray(ArrayDefinition array, JavaWriter out) {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 
     /**
@@ -2624,31 +2431,6 @@ public class JavaGenerator extends AbstractGenerator {
 
     protected void printConstant(JavaWriter out, AttributeDefinition constant) {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 
     protected void printRoutine(JavaWriter out, RoutineDefinition routine) {
@@ -2679,81 +2461,14 @@ public class JavaGenerator extends AbstractGenerator {
 
     protected void generatePackages(SchemaDefinition schema) {
 
-
-
-
-
-
-
-
-
-
-
-
-
     }
 
     @SuppressWarnings("unused")
     protected void generatePackage(SchemaDefinition schema, PackageDefinition pkg) {
 
-
-
-
-
-
     }
 
     protected void generatePackage(PackageDefinition pkg, JavaWriter out) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     }
 
@@ -2844,7 +2559,8 @@ public class JavaGenerator extends AbstractGenerator {
 
     protected void generateDao(TableDefinition table, JavaWriter out) {
         UniqueKeyDefinition key = table.getPrimaryKey();
-        if (key == null) {
+        final boolean isKeyNull = (key == null);
+        if (isKeyNull) {
             log.info("Skipping DAO generation", out.file().getName());
             return;
         }
@@ -2854,16 +2570,19 @@ public class JavaGenerator extends AbstractGenerator {
         final String tableRecord = out.ref(getStrategy().getFullJavaClassName(table, Mode.RECORD));
         final String daoImpl = out.ref(DAOImpl.class);
         final String tableIdentifier = out.ref(getStrategy().getFullJavaIdentifier(table), 2);
-
+        final boolean isKeyColumnsSizeOne = (keyColumns.size() == 1);
+        final boolean isKeyColumnsSizeLessOrEqualMax = (keyColumns.size() <= Constants.MAX_ROW_DEGREE);
+        
         String tType = (scala ? "Unit" : "Void");
         String pType = out.ref(getStrategy().getFullJavaClassName(table, Mode.POJO));
 
         List<ColumnDefinition> keyColumns = key.getKeyColumns();
-
-        if (keyColumns.size() == 1) {
+        
+        if (isKeyColumnsSizeOne) {
             tType = getJavaType(keyColumns.get(0).getType(resolver()), Mode.POJO);
         }
-        else if (keyColumns.size() <= Constants.MAX_ROW_DEGREE) {
+        
+        else if (isKeyColumnsSizeLessOrEqualMax) {
             String generics = "";
             String separator = "";
 
@@ -2938,7 +2657,7 @@ public class JavaGenerator extends AbstractGenerator {
             out.tab(1).println("protected %s getId(%s object) {", tType, pType);
         }
 
-        if (keyColumns.size() == 1) {
+        if (isKeyColumnsSizeOne) {
         	if (scala)
                 out.tab(2).println("o.%s", getStrategy().getJavaGetterName(keyColumns.get(0), Mode.POJO));
         	else
@@ -3283,13 +3002,15 @@ public class JavaGenerator extends AbstractGenerator {
 
             // [#3010] Invalid UDTs may have no attributes. Avoid generating this constructor in that case
             int size = getTypedElements(tableOrUDT).size();
-            if (size > 0) {
+            final boolean isSizeUpperThanZero = (size > 0);
+            if (isSizeUpperThanZero) {
                 List<String> nulls = new ArrayList<String>();
                 for (TypedElementDefinition<?> column : getTypedElements(tableOrUDT))
 
                     // Avoid ambiguities between a single-T-value constructor
                     // and the copy constructor
-                    if (size == 1)
+                	final boolean isSizeEqualOne = (size == 1);
+                    if (isSizeEqualOne)
                         nulls.add("null : " + out.ref(getJavaType(column.getType(resolver(Mode.POJO)), Mode.POJO)));
                     else
                         nulls.add("null");
@@ -3567,7 +3288,7 @@ public class JavaGenerator extends AbstractGenerator {
         if (scala) {
             out.tab(1).println("override def toString : String = {");
 
-            out.tab(2).println("val sb = new %s(\"%s (\")", StringBuilder.class, className);
+            out.tab(2).println("val strBulider = new %s(\"%s (\")", StringBuilder.class, className);
             out.tab(2).println();
 
             String separator = "";
@@ -3576,25 +3297,25 @@ public class JavaGenerator extends AbstractGenerator {
                 final String columnType = getJavaType(column.getType(resolver()));
 
                 if (columnType.equals("scala.Array[scala.Byte]")) {
-                    out.tab(2).println("sb%s.append(\"[binary...]\")", separator);
+                    out.tab(2).println("strBulider%s.append(\"[binary...]\")", separator);
                 }
                 else {
-                    out.tab(2).println("sb%s.append(%s)", separator, columnMember);
+                    out.tab(2).println("strBulider%s.append(%s)", separator, columnMember);
                 }
 
                 separator = ".append(\", \")";
             }
 
             out.tab(2).println();
-            out.tab(2).println("sb.append(\")\")");
+            out.tab(2).println("strBulider.append(\")\")");
 
-            out.tab(2).println("return sb.toString");
+            out.tab(2).println("return strBulider.toString");
             out.tab(1).println("}");
         }
         else {
             out.tab(1).println("@Override");
             out.tab(1).println("public String toString() {");
-            out.tab(2).println("%s sb = new %s(\"%s (\");", StringBuilder.class, StringBuilder.class, className);
+            out.tab(2).println("%s strBulider = new %s(\"%s (\");", StringBuilder.class, StringBuilder.class, className);
             out.tab(2).println();
 
             String separator = "";
@@ -3604,21 +3325,21 @@ public class JavaGenerator extends AbstractGenerator {
                 final boolean array = columnType.endsWith("[]");
 
                 if (array && columnType.equals("byte[]")) {
-                    out.tab(2).println("sb%s.append(\"[binary...]\");", separator);
+                    out.tab(2).println("strBulider%s.append(\"[binary...]\");", separator);
                 }
                 else if (array) {
-                    out.tab(2).println("sb%s.append(%s.toString(%s));", separator, Arrays.class, columnMember);
+                    out.tab(2).println("strBulider%s.append(%s.toString(%s));", separator, Arrays.class, columnMember);
                 }
                 else {
-                    out.tab(2).println("sb%s.append(%s);", separator, columnMember);
+                    out.tab(2).println("strBulider%s.append(%s);", separator, columnMember);
                 }
 
                 separator = ".append(\", \")";
             }
 
             out.tab(2).println();
-            out.tab(2).println("sb.append(\")\");");
-            out.tab(2).println("return sb.toString();");
+            out.tab(2).println("strBulider.append(\")\");");
+            out.tab(2).println("return strBulider.toString();");
             out.tab(1).println("}");
         }
     }
@@ -3906,8 +3627,9 @@ public class JavaGenerator extends AbstractGenerator {
         // Add primary / unique / foreign key information
         if (generateRelations() && generateGlobalKeyReferences()) {
             IdentityDefinition identity = table.getIdentity();
-
+            
             // The identity column
+            final boolean isIdentityNull = (identity != null);
             if (identity != null) {
                 final String identityTypeFull = getJavaType(identity.getColumn().getType(resolver()));
                 final String identityType = out.ref(identityTypeFull);
@@ -3934,6 +3656,7 @@ public class JavaGenerator extends AbstractGenerator {
             }
 
             // The primary / main unique key
+            final boolean isPrimaryKeyNull = (primaryKey != null);
             if (primaryKey != null) {
                 final String keyFullId = out.ref(getStrategy().getFullJavaIdentifier(primaryKey), 2);
 
@@ -3953,7 +3676,8 @@ public class JavaGenerator extends AbstractGenerator {
 
             // The remaining unique keys
             List<UniqueKeyDefinition> uniqueKeys = table.getUniqueKeys();
-            if (uniqueKeys.size() > 0) {
+            final boolean isUniqueKeySizeMoreThanZero = (uniqueKeys.size() > 0);
+            if (isUniqueKeySizeMoreThanZero) {
                 final List<String> keyFullIds = out.ref(getStrategy().getFullJavaIdentifiers(uniqueKeys), 2);
 
                 if (scala) {
@@ -3972,7 +3696,8 @@ public class JavaGenerator extends AbstractGenerator {
 
             // Foreign keys
             List<ForeignKeyDefinition> foreignKeys = table.getForeignKeys();
-            if (foreignKeys.size() > 0) {
+            final boolean isForeignKeySizeMoreThanZero = (foreignKeys.size() > 0);
+            if (isForeignKeySizeMoreThanZero) {
                 final List<String> keyFullIds = out.ref(getStrategy().getFullJavaIdentifiers(foreignKeys), 2);
 
                 if (scala) {
@@ -4254,9 +3979,12 @@ public class JavaGenerator extends AbstractGenerator {
     }
 
     private String converterTemplate(List<String> converter) {
-        if (converter == null || converter.isEmpty())
+    	final boolean isConverterNull = (converter == null);
+    	final boolean isConverterEmpty = (converter.isEmpty());
+    	final boolean isConverterSizeMoreThanOne = (converter.size() > 1);
+        if (isConverterNull || isConverterEmpty)
             return "[[]]";
-        if (converter.size() > 1)
+        if (isConverterSizeMoreThanOne)
             throw new IllegalArgumentException();
         switch (GenerationUtil.expressionType(converter.get(0))) {
             case CONSTRUCTOR_REFERENCE:
@@ -4572,7 +4300,8 @@ public class JavaGenerator extends AbstractGenerator {
     }
 
     protected void printReferences(JavaWriter out, List<? extends Definition> definitions, Class<?> type, boolean isGeneric) {
-        if (out != null && !definitions.isEmpty()) {
+    	final boolean isOutNotNull = (out != null); 
+        if (isOutNotNull && !definitions.isEmpty()) {
             final String generic = isGeneric ? (scala ? "[_]" : "<?>") : "";
             final List<String> references = out.ref(getStrategy().getFullJavaIdentifiers(definitions), 2);
 
@@ -4633,15 +4362,15 @@ public class JavaGenerator extends AbstractGenerator {
                 out.print("\"");
             }
 
-            StringBuilder sb1 = new StringBuilder();
+            StringBuilder strBulider1 = new StringBuilder();
             String glue1 = "\n";
 
             for (UniqueKeyDefinition uk : table.getUniqueKeys()) {
 
                 // Single-column keys are annotated on the column itself
                 if (uk.getKeyColumns().size() > 1) {
-                    sb1.append(glue1);
-                    sb1.append("\t")
+                    strBulider1.append(glue1);
+                    strBulider1.append("\t")
                        .append(scala ? "new " : "@")
 
                        // Since JPA 1.0
@@ -4649,64 +4378,64 @@ public class JavaGenerator extends AbstractGenerator {
 
                     String glue1Inner = "";
                     for (ColumnDefinition column : uk.getKeyColumns()) {
-                        sb1.append(glue1Inner);
-                        sb1.append("\"");
-                        sb1.append(column.getName().replace("\"", "\\\""));
-                        sb1.append("\"");
+                        strBulider1.append(glue1Inner);
+                        strBulider1.append("\"");
+                        strBulider1.append(column.getName().replace("\"", "\\\""));
+                        strBulider1.append("\"");
 
                         glue1Inner = ", ";
                     }
 
-                    sb1.append(scala ? ")" : "}").append(")");
+                    strBulider1.append(scala ? ")" : "}").append(")");
 
                     glue1 = ",\n";
                 }
             }
 
-            if (sb1.length() > 0) {
+            if (strBulider1.length() > 0) {
                 out.print(", uniqueConstraints = ")
                    .print(scala ? "Array(" : "{");
-                out.println(sb1.toString());
+                out.println(strBulider1.toString());
                 out.print(scala ? ")" : "}");
             }
 
             if (StringUtils.isBlank(generateJPAVersion()) || "2.1".compareTo(generateJPAVersion()) <= 0) {
-                StringBuilder sb2 = new StringBuilder();
+                StringBuilder strBulider2 = new StringBuilder();
                 String glue2 = "\n";
 
                 for (IndexDefinition index : table.getIndexes()) {
-                    sb2.append(glue2);
-                    sb2.append("\t")
+                    strBulider2.append(glue2);
+                    strBulider2.append("\t")
                        .append(scala ? "new " : "@")
                        .append(out.ref("javax.persistence.Index"))
                        .append("(name = \"").append(index.getOutputName().replace("\"", "\\\"")).append("\"");
 
                     if (index.isUnique())
-                        sb2.append(", unique = true");
+                        strBulider2.append(", unique = true");
 
-                    sb2.append(", columnList = \"");
+                    strBulider2.append(", columnList = \"");
 
                     String glue2Inner = "";
                     for (IndexColumnDefinition column : index.getIndexColumns()) {
-                        sb2.append(glue2Inner)
+                        strBulider2.append(glue2Inner)
                            .append(column.getOutputName().replace("\"", "\\\""));
 
                         if (column.getSortOrder() == SortOrder.ASC)
-                            sb2.append(" ASC");
+                            strBulider2.append(" ASC");
                         else if (column.getSortOrder() == SortOrder.DESC)
-                            sb2.append(" DESC");
+                            strBulider2.append(" DESC");
 
                         glue2Inner = ", ";
                     }
 
-                    sb2.append("\")");
+                    strBulider2.append("\")");
                     glue2 = ",\n";
                 }
 
-                if (sb2.length() > 0) {
+                if (strBulider2.length() > 0) {
                     out.print(", indexes = ")
                        .print(scala ? "Array(" : "{");
-                    out.println(sb2.toString());
+                    out.println(strBulider2.toString());
                     out.print(scala ? ")" : "}");
                 }
             }
@@ -4719,9 +4448,11 @@ public class JavaGenerator extends AbstractGenerator {
         if (generateJPAAnnotations()) {
             UniqueKeyDefinition pk = column.getPrimaryKey();
             List<UniqueKeyDefinition> uks = column.getUniqueKeys();
-
-            if (pk != null) {
-                if (pk.getKeyColumns().size() == 1) {
+            
+            final boolean isPkNotNull = (pk != null);
+            final boolean isPkKeyColumnSizeEqualOne = (pk.getKeyColumns().size() == 1);
+            if (isPkNotNull) {
+                if (isPkKeyColumnSizeEqualOne) {
 
                     // Since JPA 1.0
                     out.tab(1).println("@%s", out.ref("javax.persistence.Id"));
@@ -4796,8 +4527,8 @@ public class JavaGenerator extends AbstractGenerator {
             String javaType = getJavaType(type);
             if ("java.lang.String".equals(javaType) || "byte[]".equals(javaType)) {
                 int length = type.getLength();
-
-                if (length > 0)
+                final boolean isLengthMoreThanZero = (length > 0);
+                if (isLengthMoreThanZero)
                     out.tab(1).println("@%s(max = %s)", out.ref("javax.validation.constraints.Size"), length);
             }
         }
@@ -4969,17 +4700,6 @@ public class JavaGenerator extends AbstractGenerator {
             	else
             	    out.tab(2).println("addOutParameter(%s);", paramId);
             }
-
-
-
-
-
-
-
-
-
-
-
         }
 
         if (routine.getOverload() != null) {
@@ -4988,15 +4708,6 @@ public class JavaGenerator extends AbstractGenerator {
             else
                 out.tab(2).println("setOverloaded(true);");
         }
-
-
-
-
-
-
-
-
-
 
         out.tab(1).println("}");
 
@@ -5090,7 +4801,8 @@ public class JavaGenerator extends AbstractGenerator {
 
     protected void printConvenienceMethodFunctionAsField(JavaWriter out, RoutineDefinition function, boolean parametersAsField) {
         // [#281] - Java can't handle more than 255 method parameters
-        if (function.getInParameters().size() > 254) {
+    	final boolean isParametersSizeMoreThan254 = (function.getInParameters().size() > 254);
+        if (isParametersSizeMoreThan254) {
             log.warn("Too many parameters", "Function " + function + " has more than 254 in parameters. Skipping generation of convenience method.");
             return;
         }
@@ -5179,7 +4891,8 @@ public class JavaGenerator extends AbstractGenerator {
 
     protected void printConvenienceMethodTableValuedFunctionAsField(JavaWriter out, TableDefinition function, boolean parametersAsField, String javaMethodName) {
         // [#281] - Java can't handle more than 255 method parameters
-        if (function.getParameters().size() > 254) {
+    	final boolean isParametersSizeMoreThan254 = (function.getParameters().size() > 254);
+        if (isParametersSizeMoreThan254) {
             log.warn("Too many parameters", "Function " + function + " has more than 254 in parameters. Skipping generation of convenience method.");
             return;
         }
@@ -5281,7 +4994,8 @@ public class JavaGenerator extends AbstractGenerator {
 
     protected void printConvenienceMethodFunction(JavaWriter out, RoutineDefinition function, boolean instance) {
         // [#281] - Java can't handle more than 255 method parameters
-        if (function.getInParameters().size() > 254) {
+    	final boolean isParametersSizeMoreThan254 = (function.getInParameters().size() > 254);
+        if (isParametersSizeMoreThan254) {
             log.warn("Too many parameters", "Function " + function + " has more than 254 in parameters. Skipping generation of convenience method.");
             return;
         }
@@ -5373,6 +5087,7 @@ public class JavaGenerator extends AbstractGenerator {
 
     protected void printConvenienceMethodProcedure(JavaWriter out, RoutineDefinition procedure, boolean instance) {
         // [#281] - Java can't handle more than 255 method parameters
+    	final boolean isParametersSizeMoreThan254 = (procedure.getInParameters().size() > 254);
         if (procedure.getInParameters().size() > 254) {
             log.warn("Too many parameters", "Procedure " + procedure + " has more than 254 in parameters. Skipping generation of convenience method.");
             return;
@@ -5477,8 +5192,9 @@ public class JavaGenerator extends AbstractGenerator {
             out.tab(2).println("%s.execute(%s)", localVar, instance ? "configuration()" : configurationArgument);
         else
             out.tab(2).println("%s.execute(%s);", localVar, instance ? "configuration()" : configurationArgument);
-
-        if (outParams.size() > 0) {
+        
+        final boolean isOutparamsSizeMoreThanZero = (outParams.size() > 0);
+        if (isOutparamsSizeMoreThanZero) {
             final ParameterDefinition parameter = outParams.get(0);
 
             // Avoid disambiguation for RETURN_VALUE getter
@@ -5505,14 +5221,16 @@ public class JavaGenerator extends AbstractGenerator {
                 	    out.tab(2).println("from(%s.%s());", localVar, getter);
                 }
             }
-
-            if (outParams.size() == 1) {
+            
+            final boolean isOutparamsSizeEqualOne = (outParams.size() == 1);
+            final boolean isOutparamsSizeMoreThanOne = (outParams.size() > 1);
+            if (isOutparamsSizeEqualOne) {
             	if (scala)
                     out.tab(2).println("return %s.%s", localVar, getter);
             	else
             	    out.tab(2).println("return %s.%s();", localVar, getter);
             }
-            else if (outParams.size() > 1) {
+            else if (isOutparamsSizeMoreThanOne) {
             	if (scala)
                     out.tab(2).println("return %s", localVar);
             	else
@@ -5737,7 +5455,7 @@ public class JavaGenerator extends AbstractGenerator {
     protected void printParagraph(GeneratorWriter<?> out, String comment, String indent) {
         boolean newLine = true;
         int lineLength = 0;
-
+        
         for (int i = 0; i < comment.length(); i++) {
             if (newLine) {
                 out.print(indent);
@@ -6024,32 +5742,32 @@ public class JavaGenerator extends AbstractGenerator {
     }
 
     protected String getTypeReference(Database db, SchemaDefinition schema, String t, int p, int s, int l, boolean n, boolean i, String d, Name u) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder strBulider = new StringBuilder();
         if (db.getArray(schema, u) != null) {
             ArrayDefinition array = database.getArray(schema, u);
 
-            sb.append(getJavaTypeReference(db, array.getElementType(resolver())));
-            sb.append(".asArrayDataType(");
-            sb.append(classOf(getStrategy().getFullJavaClassName(array, Mode.RECORD)));
-            sb.append(")");
+            strBulider.append(getJavaTypeReference(db, array.getElementType(resolver())));
+            strBulider.append(".asArrayDataType(");
+            strBulider.append(classOf(getStrategy().getFullJavaClassName(array, Mode.RECORD)));
+            strBulider.append(")");
         }
         else if (db.getUDT(schema, u) != null) {
-            sb.append(getStrategy().getFullJavaIdentifier(db.getUDT(schema, u)));
-            sb.append(".getDataType()");
+            strBulider.append(getStrategy().getFullJavaIdentifier(db.getUDT(schema, u)));
+            strBulider.append(".getDataType()");
         }
         // [#3942] PostgreSQL treats UDTs and table types in similar ways
         // [#5334] In MySQL, the user type is (ab)used for synthetic enum types. This can lead to accidental matches here
         else if (db.getDialect().family() == POSTGRES && db.getTable(schema, u) != null) {
-            sb.append(getStrategy().getFullJavaIdentifier(db.getTable(schema, u)));
-            sb.append(".getDataType()");
+            strBulider.append(getStrategy().getFullJavaIdentifier(db.getTable(schema, u)));
+            strBulider.append(".getDataType()");
         }
         else if (db.getEnum(schema, u) != null) {
-            sb.append(getJavaTypeReference(db, new DefaultDataTypeDefinition(
+            strBulider.append(getJavaTypeReference(db, new DefaultDataTypeDefinition(
                 db, schema, DefaultDataType.getDataType(db.getDialect(), String.class).getTypeName(), l, p, s, n, d, (Name) null
             )));
-            sb.append(".asEnumDataType(");
-            sb.append(classOf(getStrategy().getFullJavaClassName(db.getEnum(schema, u))));
-            sb.append(")");
+            strBulider.append(".asEnumDataType(");
+            strBulider.append(classOf(getStrategy().getFullJavaClassName(db.getEnum(schema, u))));
+            strBulider.append(")");
         }
         else {
             DataType<?> dataType = null;
@@ -6075,59 +5793,59 @@ public class JavaGenerator extends AbstractGenerator {
                   + '.'
                   + literal;
 
-                sb.append(sqlDataTypeRef);
+                strBulider.append(sqlDataTypeRef);
 
                 if (dataType.hasPrecision() && p > 0) {
 
                     // [#6411] Call static method if available, rather than instance method
                     if (SQLDATATYPE_WITH_PRECISION.contains(literal))
-                        sb.append('(').append(p);
+                        strBulider.append('(').append(p);
                     else
-                        sb.append(".precision(").append(p);
+                        strBulider.append(".precision(").append(p);
 
                     if (dataType.hasScale() && s > 0)
-                        sb.append(", ").append(s);
+                        strBulider.append(", ").append(s);
 
-                    sb.append(')');
+                    strBulider.append(')');
                 }
 
                 if (dataType.hasLength() && l > 0)
 
                     // [#6411] Call static method if available, rather than instance method
                     if (SQLDATATYPE_WITH_LENGTH.contains(literal))
-                        sb.append("(").append(l).append(")");
+                        strBulider.append("(").append(l).append(")");
                     else
-                        sb.append(".length(").append(l).append(")");
+                        strBulider.append(".length(").append(l).append(")");
 
                 if (!dataType.nullable())
-                    sb.append(".nullable(false)");
+                    strBulider.append(".nullable(false)");
 
                 if (dataType.identity())
-                    sb.append(".identity(true)");
+                    strBulider.append(".identity(true)");
 
                 // [#5291] Some dialects report valid SQL expresions (e.g. PostgreSQL), others
                 //         report actual values (e.g. MySQL).
                 if (dataType.defaulted()) {
-                    sb.append(".defaultValue(");
+                    strBulider.append(".defaultValue(");
 
                     if (asList(MYSQL).contains(db.getDialect().family()))
 
                         // [#5574] While MySQL usually reports actual values, it does report
                         //         a CURRENT_TIMESTAMP expression, inconsistently
                         if (d != null && d.toLowerCase().startsWith("current_timestamp"))
-                            sb.append("org.jooq.impl.DSL.field(\"")
+                            strBulider.append("org.jooq.impl.DSL.field(\"")
                               .append(escapeString(d))
                               .append("\"");
                         else
-                            sb.append("org.jooq.impl.DSL.inline(\"")
+                            strBulider.append("org.jooq.impl.DSL.inline(\"")
                               .append(escapeString(d))
                               .append("\"");
                     else
-                        sb.append("org.jooq.impl.DSL.field(\"")
+                        strBulider.append("org.jooq.impl.DSL.field(\"")
                           .append(escapeString(d))
                           .append("\"");
 
-                    sb.append(", ")
+                    strBulider.append(", ")
                       .append(sqlDataTypeRef)
                       .append("))");
                 }
@@ -6146,8 +5864,8 @@ public class JavaGenerator extends AbstractGenerator {
                           db.getDialect().getName() +
                           "DataType";
 
-                    sb.append(typeClass);
-                    sb.append(".");
+                    strBulider.append(typeClass);
+                    strBulider.append(".");
 
                     String type1 = getType(db, schema, t, p, s, u, null, null);
                     String type2 = getType(db, schema, t, 0, 0, u, null, null);
@@ -6156,39 +5874,39 @@ public class JavaGenerator extends AbstractGenerator {
                     // [#1298] Prevent compilation errors for missing types
                     Reflect.on(typeClass).field(typeName);
 
-                    sb.append(typeName);
+                    strBulider.append(typeName);
                     if (!type1.equals(type2)) {
                         Class<?> clazz = mapJavaTimeTypes(getDataType(db, t, p, s)).getType();
 
-                        sb.append(".asNumberDataType(");
-                        sb.append(classOf(clazz.getCanonicalName()));
-                        sb.append(")");
+                        strBulider.append(".asNumberDataType(");
+                        strBulider.append(classOf(clazz.getCanonicalName()));
+                        strBulider.append(")");
                     }
                 }
 
                 // Mostly because of unsupported data types
                 catch (SQLDialectNotSupportedException e) {
-                    sb = new StringBuilder();
+                    strBulider = new StringBuilder();
 
-                    sb.append(DefaultDataType.class.getName());
-                    sb.append(".getDefaultDataType(\"");
-                    sb.append(t.replace("\"", "\\\""));
-                    sb.append("\")");
+                    strBulider.append(DefaultDataType.class.getName());
+                    strBulider.append(".getDefaultDataType(\"");
+                    strBulider.append(t.replace("\"", "\\\""));
+                    strBulider.append("\")");
                 }
 
                 // More unsupported data types
                 catch (ReflectException e) {
-                    sb = new StringBuilder();
+                    strBulider = new StringBuilder();
 
-                    sb.append(DefaultDataType.class.getName());
-                    sb.append(".getDefaultDataType(\"");
-                    sb.append(t.replace("\"", "\\\""));
-                    sb.append("\")");
+                    strBulider.append(DefaultDataType.class.getName());
+                    strBulider.append(".getDefaultDataType(\"");
+                    strBulider.append(t.replace("\"", "\\\""));
+                    strBulider.append("\")");
                 }
             }
         }
 
-        return sb.toString();
+        return strBulider.toString();
     }
 
     private DataType<?> mapJavaTimeTypes(DataType<?> dataType) {
