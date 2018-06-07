@@ -49,6 +49,7 @@ import javax.annotation.Generated;
  */
 public interface Generator {
 
+	
     /**
      * Do the code generation
      */

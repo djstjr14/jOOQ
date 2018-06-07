@@ -247,11 +247,11 @@ public class JavaGenerator extends AbstractGenerator {
         }
     }
 
-    public JavaGenerator() {
+    public JavaGenerator() { //default is JAVA
         this(JAVA);
     }
 
-    JavaGenerator(Language language) {
+    JavaGenerator(Language language) { //JAVA or SCALA
         super(language);
 
         this.scala = (language == SCALA);
