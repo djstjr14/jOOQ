@@ -67,12 +67,14 @@ final class Space extends AbstractFunction<String> {
 
 
 
+
             case DERBY:
             case FIREBIRD:
             case HSQLDB:
             case POSTGRES:
             case SQLITE:
                 return DSL.repeat(DSL.inline(" "), count);
+
 
 
 

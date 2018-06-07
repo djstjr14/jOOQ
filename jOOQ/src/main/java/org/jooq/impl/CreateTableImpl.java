@@ -47,11 +47,15 @@ import static org.jooq.Clause.CREATE_TABLE_NAME;
 // ...
 // ...
 // ...
+import static org.jooq.SQLDialect.CUBRID;
+// ...
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
 import static org.jooq.SQLDialect.H2;
 // ...
 import static org.jooq.SQLDialect.HSQLDB;
+// ...
+// ...
 import static org.jooq.SQLDialect.MARIADB;
 import static org.jooq.SQLDialect.MYSQL;
 // ...
@@ -59,7 +63,10 @@ import static org.jooq.SQLDialect.POSTGRES;
 // ...
 import static org.jooq.SQLDialect.SQLITE;
 // ...
+// ...
+// ...
 import static org.jooq.impl.DSL.commentOnTable;
+import static org.jooq.impl.DSL.createIndex;
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.insertInto;
 import static org.jooq.impl.DSL.name;
@@ -69,6 +76,7 @@ import static org.jooq.impl.Keywords.K_COMMENT;
 import static org.jooq.impl.Keywords.K_CREATE;
 import static org.jooq.impl.Keywords.K_GLOBAL_TEMPORARY;
 import static org.jooq.impl.Keywords.K_IF_NOT_EXISTS;
+import static org.jooq.impl.Keywords.K_INDEX;
 import static org.jooq.impl.Keywords.K_ON_COMMIT_DELETE_ROWS;
 import static org.jooq.impl.Keywords.K_ON_COMMIT_DROP;
 import static org.jooq.impl.Keywords.K_ON_COMMIT_PRESERVE_ROWS;
@@ -98,7 +106,9 @@ import org.jooq.CreateTableAsStep;
 import org.jooq.CreateTableColumnStep;
 import org.jooq.CreateTableWithDataStep;
 import org.jooq.DataType;
+import org.jooq.EnumType;
 import org.jooq.Field;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.QueryPart;
 import org.jooq.Record;
@@ -123,6 +133,8 @@ final class CreateTableImpl<R extends Record> extends AbstractQuery implements
     private static final long                serialVersionUID               = 8904572826501186329L;
     private static final EnumSet<SQLDialect> NO_SUPPORT_IF_NOT_EXISTS       = EnumSet.of(DERBY, FIREBIRD);
     private static final EnumSet<SQLDialect> NO_SUPPORT_WITH_DATA           = EnumSet.of(H2, MARIADB, MYSQL, SQLITE);
+    private static final EnumSet<SQLDialect> EMULATE_INDEXES_IN_BLOCK       = EnumSet.of(POSTGRES);
+    private static final EnumSet<SQLDialect> EMULATE_ENUM_TYPES_AS_CHECK    = EnumSet.of(CUBRID, DERBY, FIREBIRD, H2, HSQLDB, SQLITE);
     private static final EnumSet<SQLDialect> REQUIRES_WITH_DATA             = EnumSet.of(HSQLDB);
     private static final EnumSet<SQLDialect> WRAP_SELECT_IN_PARENS          = EnumSet.of(HSQLDB);
     private static final EnumSet<SQLDialect> SUPPORT_TEMPORARY              = EnumSet.of(MARIADB, MYSQL, POSTGRES);
@@ -138,6 +150,7 @@ final class CreateTableImpl<R extends Record> extends AbstractQuery implements
     private final List<Field<?>>             columnFields;
     private final List<DataType<?>>          columnTypes;
     private final List<Constraint>           constraints;
+    private final List<Index>                indexes;
     private final boolean                    temporary;
     private final boolean                    ifNotExists;
     private OnCommit                         onCommit;
@@ -153,6 +166,7 @@ final class CreateTableImpl<R extends Record> extends AbstractQuery implements
         this.columnFields = new ArrayList<Field<?>>();
         this.columnTypes = new ArrayList<DataType<?>>();
         this.constraints = new ArrayList<Constraint>();
+        this.indexes = new ArrayList<Index>();
     }
 
     // ------------------------------------------------------------------------
@@ -232,6 +246,22 @@ final class CreateTableImpl<R extends Record> extends AbstractQuery implements
     }
 
     @Override
+    public final CreateTableImpl<R> index(Index i) {
+        return indexes(Arrays.asList(i));
+    }
+
+    @Override
+    public final CreateTableImpl<R> indexes(Index... i) {
+        return indexes(Arrays.asList(i));
+    }
+
+    @Override
+    public final CreateTableImpl<R> indexes(Collection<? extends Index> i) {
+        indexes.addAll(i);
+        return this;
+    }
+
+    @Override
     public final CreateTableImpl<R> onCommitDeleteRows() {
         onCommit = OnCommit.DELETE_ROWS;
         return this;
@@ -302,7 +332,10 @@ final class CreateTableImpl<R extends Record> extends AbstractQuery implements
     }
 
     private final void accept0(Context<?> ctx) {
-        if (comment != null && EMULATE_COMMENT_IN_BLOCK.contains(ctx.family())) {
+        boolean c = comment != null && EMULATE_COMMENT_IN_BLOCK.contains(ctx.family());
+        boolean i = !indexes.isEmpty() && EMULATE_INDEXES_IN_BLOCK.contains(ctx.family());
+
+        if (c || i) {
             begin(ctx);
 
 
@@ -319,21 +352,46 @@ final class CreateTableImpl<R extends Record> extends AbstractQuery implements
 
             ctx.sql(';');
 
-            ctx.formatSeparator();
+            if (c) {
+                ctx.formatSeparator();
 
 
 
 
 
 
-            ctx.visit(commentOnTable(table).is(comment));
+                ctx.visit(commentOnTable(table).is(comment));
 
 
 
 
 
 
-            ctx.sql(';');
+                ctx.sql(';');
+            }
+
+            if (i) {
+                for (Index index : indexes) {
+                    ctx.formatSeparator();
+
+
+
+
+
+
+                    if ("".equals(index.getName()))
+                        ctx.visit(createIndex().on(index.getTable(), index.getFields()));
+                    else
+                        ctx.visit(createIndex(index.getUnqualifiedName()).on(index.getTable(), index.getFields()));
+
+
+
+
+
+
+                    ctx.sql(';');
+                }
+            }
 
             end(ctx);
             return;
@@ -394,8 +452,43 @@ final class CreateTableImpl<R extends Record> extends AbstractQuery implements
                            .formatSeparator()
                            .visit(constraint);
 
-            ctx.end(CREATE_TABLE_CONSTRAINTS)
-               .formatIndentEnd()
+            if (EMULATE_ENUM_TYPES_AS_CHECK.contains(ctx.family())) {
+                for (int i = 0; i < columnFields.size(); i++) {
+                    DataType<?> type = columnTypes.get(i);
+
+                    if (EnumType.class.isAssignableFrom(type.getType())) {
+                        Field<?> field = columnFields.get(i);
+
+                        ctx.sql(',')
+                           .formatSeparator()
+                           .visit(DSL.constraint(table.getName() + "_" + field.getName() + "_chk")
+                                     .check(((Field) field).in(Tools.enumLiterals((Class<EnumType>) type.getType()))));
+                    }
+                }
+            }
+
+            ctx.end(CREATE_TABLE_CONSTRAINTS);
+
+            if (!indexes.isEmpty() && !EMULATE_INDEXES_IN_BLOCK.contains(ctx.family())) {
+                ctx.qualify(false);
+
+                for (Index index : indexes) {
+                    ctx.sql(',')
+                       .formatSeparator()
+                       .visit(K_INDEX);
+
+                    if (!"".equals(index.getName()))
+                        ctx.sql(' ').visit(index.getUnqualifiedName());
+
+                    ctx.sql(" (")
+                       .visit(new SortFieldList(index.getFields()))
+                       .sql(')');
+                }
+
+                ctx.qualify(qualify);
+            }
+
+            ctx.formatIndentEnd()
                .formatNewLine()
                .sql(')');
 

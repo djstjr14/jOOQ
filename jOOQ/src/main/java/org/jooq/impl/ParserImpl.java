@@ -51,7 +51,15 @@ import static org.jooq.impl.DSL.atan;
 import static org.jooq.impl.DSL.atan2;
 import static org.jooq.impl.DSL.avg;
 import static org.jooq.impl.DSL.avgDistinct;
+import static org.jooq.impl.DSL.bitAnd;
+import static org.jooq.impl.DSL.bitCount;
 import static org.jooq.impl.DSL.bitLength;
+import static org.jooq.impl.DSL.bitNand;
+import static org.jooq.impl.DSL.bitNor;
+import static org.jooq.impl.DSL.bitNot;
+import static org.jooq.impl.DSL.bitOr;
+import static org.jooq.impl.DSL.bitXNor;
+import static org.jooq.impl.DSL.bitXor;
 import static org.jooq.impl.DSL.boolOr;
 import static org.jooq.impl.DSL.cast;
 import static org.jooq.impl.DSL.catalog;
@@ -189,6 +197,8 @@ import static org.jooq.impl.DSL.rtrim;
 import static org.jooq.impl.DSL.schema;
 import static org.jooq.impl.DSL.second;
 import static org.jooq.impl.DSL.sequence;
+import static org.jooq.impl.DSL.shl;
+import static org.jooq.impl.DSL.shr;
 import static org.jooq.impl.DSL.sign;
 import static org.jooq.impl.DSL.sin;
 import static org.jooq.impl.DSL.sinh;
@@ -211,6 +221,7 @@ import static org.jooq.impl.DSL.translate;
 import static org.jooq.impl.DSL.trim;
 import static org.jooq.impl.DSL.trunc;
 import static org.jooq.impl.DSL.unique;
+import static org.jooq.impl.DSL.unnest;
 import static org.jooq.impl.DSL.user;
 import static org.jooq.impl.DSL.values;
 import static org.jooq.impl.DSL.varPop;
@@ -279,12 +290,14 @@ import org.jooq.Constraint;
 import org.jooq.ConstraintForeignKeyOnStep;
 import org.jooq.ConstraintTypeStep;
 import org.jooq.CreateIndexFinalStep;
+import org.jooq.CreateIndexIncludeStep;
 import org.jooq.CreateIndexStep;
 import org.jooq.CreateIndexWhereStep;
 import org.jooq.CreateTableAsStep;
 import org.jooq.CreateTableColumnStep;
 import org.jooq.CreateTableCommentStep;
 import org.jooq.CreateTableConstraintStep;
+import org.jooq.CreateTableIndexStep;
 import org.jooq.CreateTableStorageStep;
 import org.jooq.CreateTableWithDataStep;
 import org.jooq.DDLQuery;
@@ -311,6 +324,7 @@ import org.jooq.GrantWithGrantOptionStep;
 import org.jooq.GroupConcatOrderByStep;
 import org.jooq.GroupConcatSeparatorStep;
 import org.jooq.GroupField;
+import org.jooq.Index;
 import org.jooq.Insert;
 import org.jooq.InsertOnConflictDoUpdateStep;
 import org.jooq.InsertOnConflictWhereStep;
@@ -370,6 +384,7 @@ import org.jooq.User;
 // ...
 import org.jooq.WindowBeforeOverStep;
 import org.jooq.WindowDefinition;
+import org.jooq.WindowFromFirstLastStep;
 import org.jooq.WindowIgnoreNullsStep;
 import org.jooq.WindowOverStep;
 import org.jooq.WindowSpecification;
@@ -377,8 +392,12 @@ import org.jooq.WindowSpecificationOrderByStep;
 import org.jooq.WindowSpecificationRowsAndStep;
 import org.jooq.WindowSpecificationRowsStep;
 import org.jooq.conf.ParseUnknownFunctions;
+import org.jooq.conf.ParseUnsupportedSyntax;
 import org.jooq.conf.ParseWithMetaLookups;
 import org.jooq.tools.reflect.Reflect;
+import org.jooq.types.DayToSecond;
+import org.jooq.types.Interval;
+import org.jooq.types.YearToMonth;
 
 /**
  * @author Lukas Eder
@@ -598,7 +617,7 @@ final class ParserImpl implements Parser {
 
             case 'd':
             case 'D':
-                if (!parseResultQuery && peekKeyword(ctx, "DELETE"))
+                if (!parseResultQuery && (peekKeyword(ctx, "DELETE") || peekKeyword(ctx, "DEL")))
                     return parseDelete(ctx, null);
                 else if (!parseResultQuery && peekKeyword(ctx, "DROP"))
                     return parseDrop(ctx);
@@ -625,7 +644,7 @@ final class ParserImpl implements Parser {
 
             case 'i':
             case 'I':
-                if (!parseResultQuery && peekKeyword(ctx, "INSERT"))
+                if (!parseResultQuery && (peekKeyword(ctx, "INSERT") || peekKeyword(ctx, "INS")))
                     return parseInsert(ctx, null);
 
                 break;
@@ -648,7 +667,7 @@ final class ParserImpl implements Parser {
 
             case 's':
             case 'S':
-                if (peekKeyword(ctx, "SELECT"))
+                if (peekKeyword(ctx, "SELECT") || peekKeyword(ctx, "SEL"))
                     return parseSelect(ctx);
                 else if (!parseResultQuery && peekKeyword(ctx, "SET"))
                     return parseSet(ctx);
@@ -664,7 +683,7 @@ final class ParserImpl implements Parser {
 
             case 'u':
             case 'U':
-                if (!parseResultQuery && peekKeyword(ctx, "UPDATE"))
+                if (!parseResultQuery && (peekKeyword(ctx, "UPDATE") || peekKeyword(ctx, "UPD")))
                     return parseUpdate(ctx, null);
                 else if (!parseResultQuery && peekKeyword(ctx, "USE"))
                     return parseUse(ctx);
@@ -733,15 +752,16 @@ final class ParserImpl implements Parser {
         // TODO Better model API for WITH clause
         WithImpl with = (WithImpl) new WithImpl(ctx.dsl.configuration(), recursive).with(cte.toArray(EMPTY_COMMON_TABLE_EXPRESSION));
         Query result;
-        if (!parseSelect && peekKeyword(ctx, "DELETE"))
+        if (!parseSelect && (peekKeyword(ctx, "DELETE") || peekKeyword(ctx, "DEL")))
             result = parseDelete(ctx, with);
-        else if (!parseSelect && peekKeyword(ctx, "INSERT"))
+        else if (!parseSelect && (peekKeyword(ctx, "INSERT") || peekKeyword(ctx, "INS")))
             result = parseInsert(ctx, with);
         else if (!parseSelect && peekKeyword(ctx, "MERGE"))
             result = parseMerge(ctx, with);
-        else if (peekKeyword(ctx, "SELECT", false, true, false))
+        else if (peekKeyword(ctx, "SELECT", false, true, false)
+              || peekKeyword(ctx, "SEL", false, true, false))
             result = parseSelect(ctx, null, with);
-        else if (!parseSelect && peekKeyword(ctx, "UPDATE"))
+        else if (!parseSelect && (peekKeyword(ctx, "UPDATE") || peekKeyword(ctx, "UPD")))
             result = parseUpdate(ctx, with);
         else if ((parseWhitespaceIf(ctx) || true) && ctx.done())
             throw ctx.exception("Missing statement after WITH");
@@ -825,7 +845,7 @@ final class ParserImpl implements Parser {
         return result;
     }
 
-    private static void parseLimit(ParserContext ctx, SelectQueryImpl<Record> result, boolean offset) {
+    private static final void parseLimit(ParserContext ctx, SelectQueryImpl<Record> result, boolean offset) {
         boolean offsetStandard = false;
         boolean offsetPostgres = false;
 
@@ -959,7 +979,9 @@ final class ParserImpl implements Parser {
             return (SelectQueryImpl<Record>) ctx.dsl.selectQuery(parseTableValueConstructor(ctx));
 
         ctx.ignoreHints(false);
-        parseKeyword(ctx, "SELECT");
+        if (!parseKeywordIf(ctx, "SELECT"))
+            parseKeyword(ctx, "SEL");
+
         String hints = parseHints(ctx);
         boolean distinct = parseKeywordIf(ctx, "DISTINCT") || parseKeywordIf(ctx, "UNIQUE");
         List<Field<?>> distinctOn = null;
@@ -1321,7 +1343,9 @@ final class ParserImpl implements Parser {
     }
 
     private static final Delete<?> parseDelete(ParserContext ctx, WithImpl with) {
-        parseKeyword(ctx, "DELETE");
+        if (!parseKeywordIf(ctx, "DELETE"))
+            parseKeyword(ctx, "DEL");
+
         parseKeywordIf(ctx, "FROM");
         Table<?> tableName = parseTableName(ctx);
         boolean where = parseKeywordIf(ctx, "WHERE");
@@ -1342,7 +1366,10 @@ final class ParserImpl implements Parser {
     }
 
     private static final Insert<?> parseInsert(ParserContext ctx, WithImpl with) {
-        parseKeyword(ctx, "INSERT INTO");
+        if (!parseKeywordIf(ctx, "INSERT"))
+            parseKeyword(ctx, "INS");
+
+        parseKeyword(ctx, "INTO");
         Table<?> tableName = parseTableName(ctx);
         InsertSetStep<?> s1 = (with == null ? ctx.dsl.insertInto(tableName) : with.insertInto(tableName));
         Field<?>[] fields = null;
@@ -1395,7 +1422,8 @@ final class ParserImpl implements Parser {
 
             returning = onDuplicate =  s1.set(map);
         }
-        else if (peekKeyword(ctx, "SELECT", false, true, false)){
+        else if (peekKeyword(ctx, "SELECT", false, true, false)
+              || peekKeyword(ctx, "SEL", false, true, false)){
             SelectQueryImpl<Record> select = parseSelect(ctx);
 
             returning = onDuplicate = (fields == null)
@@ -1458,7 +1486,9 @@ final class ParserImpl implements Parser {
     }
 
     private static final Update<?> parseUpdate(ParserContext ctx, WithImpl with) {
-        parseKeyword(ctx, "UPDATE");
+        if (!parseKeywordIf(ctx, "UPDATE"))
+            parseKeyword(ctx, "UPD");
+
         Table<?> tableName = parseTableName(ctx);
         UpdateSetFirstStep<?> s1 = (with == null ? ctx.dsl.update(tableName) : with.update(tableName));
         parseKeyword(ctx, "SET");
@@ -1727,6 +1757,10 @@ final class ParserImpl implements Parser {
             return parseCreateTable(ctx, true);
         else if (parseKeywordIf(ctx, "INDEX"))
             return parseCreateIndex(ctx, false);
+        else if (parseKeywordIf(ctx, "SPATIAL INDEX") && ctx.requireUnsupportedSyntax())
+            return parseCreateIndex(ctx, false);
+        else if (parseKeywordIf(ctx, "FULLTEXT INDEX") && ctx.requireUnsupportedSyntax())
+            return parseCreateIndex(ctx, false);
         else if (parseKeywordIf(ctx, "UNIQUE INDEX"))
             return parseCreateIndex(ctx, true);
         else if (parseKeywordIf(ctx, "SCHEMA"))
@@ -1740,7 +1774,18 @@ final class ParserImpl implements Parser {
         else if (parseKeywordIf(ctx, "VIEW"))
             return parseCreateView(ctx, false);
         else
-            throw ctx.expected("GENERATOR", "GLOBAL TEMPORARY TABLE", "INDEX", "OR ALTER VIEW", "OR REPLACE VIEW", "SCHEMA", "SEQUENCE", "TABLE", "TEMPORARY TABLE", "UNIQUE INDEX", "VIEW");
+            throw ctx.expected(
+                "GENERATOR",
+                "GLOBAL TEMPORARY TABLE",
+                "INDEX",
+                "OR ALTER VIEW",
+                "OR REPLACE VIEW",
+                "SCHEMA",
+                "SEQUENCE",
+                "TABLE",
+                "TEMPORARY TABLE",
+                "UNIQUE INDEX",
+                "VIEW");
     }
 
     private static final Query parseAlter(ParserContext ctx) {
@@ -2106,11 +2151,27 @@ final class ParserImpl implements Parser {
         else {
             List<Field<?>> fields = new ArrayList<Field<?>>();
             List<Constraint> constraints = new ArrayList<Constraint>();
+            List<Index> indexes = new ArrayList<Index>();
             boolean primary = false;
             boolean noConstraint = true;
 
             parse(ctx, '(');
+
+            columnLoop:
             do {
+                int position = ctx.position();
+
+                // [#7348] Look ahead if the next tokens indicate a MySQL index definition
+                if (parseKeywordIf(ctx, "KEY") || parseKeywordIf(ctx, "INDEX")) {
+                    if (parseIf(ctx, '(') || parseIdentifierIf(ctx) != null) {
+                        ctx.position(position);
+                        noConstraint = false;
+                        break columnLoop;
+                    }
+
+                    ctx.position(position);
+                }
+
                 Name fieldName = parseIdentifier(ctx);
                 DataType<?> type = parseDataType(ctx);
                 Comment fieldComment = null;
@@ -2308,8 +2369,10 @@ final class ParserImpl implements Parser {
                         constraints.add(parseForeignKeySpecification(ctx, constraint));
                     else if (parseKeywordIf(ctx, "CHECK"))
                         constraints.add(parseCheckSpecification(ctx, constraint));
+                    else if (constraint == null && (parseKeywordIf(ctx, "KEY") || parseKeywordIf(ctx, "INDEX")))
+                        indexes.add(parseIndexSpecification(ctx, tableName));
                     else
-                        throw ctx.expected("CHECK", "FOREIGN KEY", "PRIMARY KEY", "UNIQUE");
+                        throw ctx.expected("CHECK", "CONSTRAINT", "FOREIGN KEY", "INDEX", "KEY", "PRIMARY KEY", "UNIQUE");
                 }
                 while (parseIf(ctx, ','));
             }
@@ -2325,20 +2388,23 @@ final class ParserImpl implements Parser {
             CreateTableConstraintStep s3 = constraints.isEmpty()
                 ? s2
                 : s2.constraints(constraints);
-            CreateTableCommentStep s4 = s3;
+            CreateTableIndexStep s4 = indexes.isEmpty()
+                ? s3
+                : s3.indexes(indexes);
+            CreateTableCommentStep s5 = s4;
 
             if (temporary && parseKeywordIf(ctx, "ON COMMIT")) {
                 if (parseKeywordIf(ctx, "DELETE ROWS"))
-                    s4 = s3.onCommitDeleteRows();
+                    s5 = s4.onCommitDeleteRows();
                 else if (parseKeywordIf(ctx, "DROP"))
-                    s4 = s3.onCommitDrop();
+                    s5 = s4.onCommitDrop();
                 else if (parseKeywordIf(ctx, "PRESERVE ROWS"))
-                    s4 = s3.onCommitPreserveRows();
+                    s5 = s4.onCommitPreserveRows();
                 else
                     throw ctx.unsupportedClause();
             }
 
-            storageStep = commentStep = s4;
+            storageStep = commentStep = s5;
         }
 
         List<SQL> storage = new ArrayList<SQL>();
@@ -2477,6 +2543,14 @@ final class ParserImpl implements Parser {
             return storageStep;
     }
 
+    private static final Index parseIndexSpecification(ParserContext ctx, Table<?> table) {
+        Name name = parseIdentifierIf(ctx);
+        parse(ctx, '(');
+        SortField<?>[] fields = parseSortSpecification(ctx).toArray(EMPTY_SORTFIELD);
+        parse(ctx, ')');
+        return Internal.createIndex(name == null ? DSL.name("") : name, table, fields, false);
+    }
+
     private static final Constraint parsePrimaryKeySpecification(ParserContext ctx, ConstraintTypeStep constraint) {
         parse(ctx, '(');
         Field<?>[] fieldNames = parseFieldNames(ctx).toArray(EMPTY_FIELD);
@@ -2587,7 +2661,7 @@ final class ParserImpl implements Parser {
             case 'a':
             case 'A':
                 if (parseKeywordIf(ctx, "ADD"))
-                    return parseAlterTableAdd(ctx, s1);
+                    return parseAlterTableAdd(ctx, s1, tableName);
                 else if (parseKeywordIf(ctx, "ALTER") && (parseKeywordIf(ctx, "COLUMN") || true))
                     return parseAlterTableAlterColumn(ctx, s1);
 
@@ -2611,6 +2685,11 @@ final class ParserImpl implements Parser {
                         Name constraint = parseIdentifier(ctx);
 
                         return s1.dropConstraint(constraint);
+                    }
+                    else if (parseKeywordIf(ctx, "INDEX")
+                          || parseKeywordIf(ctx, "KEY")) {
+                        Name index = parseIdentifier(ctx);
+                        return ctx.dsl.dropIndex(index).on(tableName);
                     }
                     else {
                         parseKeywordIf(ctx, "COLUMN");
@@ -2690,8 +2769,26 @@ final class ParserImpl implements Parser {
         throw ctx.expected("ADD", "ALTER", "COMMENT", "DROP", "MODIFY", "RENAME");
     }
 
-    private static DDLQuery parseAlterTableAdd(ParserContext ctx, AlterTableStep s1) {
+    private static DDLQuery parseAlterTableAdd(ParserContext ctx, AlterTableStep s1, Table<?> tableName) {
         List<FieldOrConstraint> list = new ArrayList<FieldOrConstraint>();
+
+        if (((parseKeywordIf(ctx, "SPATIAL INDEX")
+            || parseKeywordIf(ctx, "SPATIAL KEY")
+            || parseKeywordIf(ctx, "FULLTEXT INDEX")
+            || parseKeywordIf(ctx, "FULLTEXT KEY"))
+            && ctx.requireUnsupportedSyntax())
+
+            || parseKeywordIf(ctx, "INDEX")
+            || parseKeywordIf(ctx, "KEY")) {
+            Name name = parseIdentifierIf(ctx);
+            parse(ctx, '(');
+            List<SortField<?>> sort = parseSortSpecification(ctx);
+            parse(ctx, ')');
+
+            return name == null
+                ? ctx.dsl.createIndex().on(tableName, sort)
+                : ctx.dsl.createIndex(name).on(tableName, sort);
+        }
 
         if (parseIf(ctx, '(')) {
             do {
@@ -2981,10 +3078,17 @@ final class ParserImpl implements Parser {
         parse(ctx, '(');
         SortField<?>[] fields = parseSortSpecification(ctx).toArray(EMPTY_SORTFIELD);
         parse(ctx, ')');
+
+        Name[] include = null;
+        if (parseKeywordIf(ctx, "INCLUDE")) {
+            parse(ctx, '(');
+            include = parseIdentifiers(ctx).toArray(EMPTY_NAME);
+            parse(ctx, ')');
+        }
+
         Condition condition = parseKeywordIf(ctx, "WHERE")
             ? parseCondition(ctx)
             : null;
-
 
         CreateIndexStep s1 = ifNotExists
             ? unique
@@ -2998,12 +3102,15 @@ final class ParserImpl implements Parser {
                     ? ctx.dsl.createIndex()
                     : ctx.dsl.createIndex(indexName);
 
-        CreateIndexWhereStep s2 = s1.on(tableName, fields);
-        CreateIndexFinalStep s3 = condition != null
-            ? s2.where(condition)
+        CreateIndexIncludeStep s2 = s1.on(tableName, fields);
+        CreateIndexWhereStep s3 = include != null
+            ? s2.include(include)
             : s2;
+        CreateIndexFinalStep s4 = condition != null
+            ? s3.where(condition)
+            : s3;
 
-        return s3;
+        return s4;
     }
 
     private static final DDLQuery parseAlterDomain(ParserContext ctx) {
@@ -3205,7 +3312,7 @@ final class ParserImpl implements Parser {
                 Condition result;
 
                 parse(ctx, '(');
-                if (peekKeyword(ctx, "SELECT"))
+                if (peekKeyword(ctx, "SELECT") || peekKeyword(ctx, "SEL"))
                     result = not
                         ? left instanceof Field
                             ? ((Field) left).notIn(parseSelect(ctx, 1))
@@ -3283,7 +3390,7 @@ final class ParserImpl implements Parser {
     }
 
     private static final Table<?> parseTable(ParserContext ctx) {
-        Table<?> result = parseTableFactor(ctx);
+        Table<?> result = parseLateral(ctx);
 
         for (;;) {
             Table<?> joined = parseJoinedTableIf(ctx, result);
@@ -3294,27 +3401,44 @@ final class ParserImpl implements Parser {
         }
     }
 
+    private static final Table<?> parseLateral(ParserContext ctx) {
+        if (parseKeywordIf(ctx, "LATERAL"))
+            return lateral(parseTableFactor(ctx));
+        else
+            return parseTableFactor(ctx);
+    }
+
     private static final Table<?> parseTableFactor(ParserContext ctx) {
         Table<?> result = null;
 
         // TODO [#5306] Support FINAL TABLE (<data change statement>)
         // TOOD ONLY ( table primary )
-        if (parseKeywordIf(ctx, "LATERAL")) {
+        if (parseFunctionNameIf(ctx, "UNNEST")) {
             parse(ctx, '(');
-            result = lateral(parseSelect(ctx));
+            Field<?> f = parseField(ctx, Type.A);
+
+            // Work around a missing feature in unnest()
+            if (!f.getType().isArray())
+                f = f.coerce(f.getDataType().getArrayDataType());
+
+            result = unnest(f);
             parse(ctx, ')');
-        }
-        else if (parseFunctionNameIf(ctx, "UNNEST")) {
-            // TODO
-            throw ctx.notImplemented("UNNEST");
         }
         else if (parseFunctionNameIf(ctx, "GENERATE_SERIES")) {
             parse(ctx, '(');
             Field from = toField(ctx, parseConcat(ctx, Type.N));
             parse(ctx, ',');
             Field to = toField(ctx, parseConcat(ctx, Type.N));
-            result = generateSeries(from, to);
+
+            Field step = parseIf(ctx, ',')
+                ? toField(ctx, parseConcat(ctx, Type.N))
+                : null;
+
             parse(ctx, ')');
+
+            result = step == null
+                ? generateSeries(from, to)
+                : generateSeries(from, to, step);
         }
         else if (parseIf(ctx, '(')) {
 
@@ -3324,7 +3448,7 @@ final class ParserImpl implements Parser {
             // - A values derived table:              E.g. (values (1))
             // - A joined table:                      E.g. ((a join b on p) right join c on q)
             // - A combination of the above:          E.g. ((a join (select 1) on p) right join (((select 1)) union (select 2)) on q)
-            if (peekKeyword(ctx, "SELECT")) {
+            if (peekKeyword(ctx, "SELECT") || peekKeyword(ctx, "SEL")) {
                 SelectQueryImpl<Record> select = parseSelect(ctx);
                 parse(ctx, ')');
                 result = table(parseQueryExpressionBody(ctx, null, null, select));
@@ -3583,7 +3707,7 @@ final class ParserImpl implements Parser {
     }
 
     private static final Table<?> parseJoinedTable(ParserContext ctx) {
-        Table<?> result = parseTableFactor(ctx);
+        Table<?> result = parseLateral(ctx);
 
         for (;;) {
             Table<?> joined = parseJoinedTableIf(ctx, result);
@@ -3601,7 +3725,7 @@ final class ParserImpl implements Parser {
         if (joinType == null)
             return null;
 
-        Table<?> right = joinType.qualified() ? parseTable(ctx) : parseTableFactor(ctx);
+        Table<?> right = joinType.qualified() ? parseTable(ctx) : parseLateral(ctx);
 
         TableOptionalOnStep<?> s0;
         TablePartitionByStep<?> s1;
@@ -4039,6 +4163,10 @@ final class ParserImpl implements Parser {
                 if (N.is(type))
                     if ((field = parseFieldBitLengthIf(ctx)) != null)
                         return field;
+                    else if (parseFunctionNameIf(ctx, "BIT_COUNT"))
+                        return bitCount((Field) parseFieldSumParenthesised(ctx));
+                    else if ((field = parseFieldBitwiseFunctionIf(ctx)) != null)
+                        return field;
 
                 break;
 
@@ -4168,9 +4296,15 @@ final class ParserImpl implements Parser {
 
             case 'i':
             case 'I':
-                if (N.is(type) && (field = parseFieldInstrIf(ctx)) != null)
-                    return field;
-                else if ((field = parseFieldIfnullIf(ctx)) != null)
+                if (D.is(type))
+                    if ((field = parseFieldIntervalLiteralIf(ctx)) != null)
+                        return field;
+
+                if (N.is(type))
+                    if ((field = parseFieldInstrIf(ctx)) != null)
+                        return field;
+
+                if ((field = parseFieldIfnullIf(ctx)) != null)
                     return field;
                 else if ((field = parseFieldIsnullIf(ctx)) != null)
                     return field;
@@ -4252,6 +4386,10 @@ final class ParserImpl implements Parser {
 
             case 'o':
             case 'O':
+                if (S.is(type))
+                    if ((field = parseFieldReplaceIf(ctx)) != null)
+                        return field;
+
                 if (N.is(type))
                     if ((field = parseFieldOctetLengthIf(ctx)) != null)
                         return field;
@@ -4319,6 +4457,8 @@ final class ParserImpl implements Parser {
                         return field;
                     else if ((field = parseFieldSpaceIf(ctx)) != null)
                         return field;
+                    else if ((field = parseFieldReplaceIf(ctx)) != null)
+                        return field;
 
                 if (N.is(type))
                     if ((field = parseFieldSecondIf(ctx)) != null)
@@ -4331,6 +4471,10 @@ final class ParserImpl implements Parser {
                         return sinh((Field) parseFieldSumParenthesised(ctx));
                     else if (parseFunctionNameIf(ctx, "SIN"))
                         return sin((Field) parseFieldSumParenthesised(ctx));
+                    else if ((field = parseFieldShlIf(ctx)) != null)
+                        return field;
+                    else if ((field = parseFieldShrIf(ctx)) != null)
+                        return field;
 
                 break;
 
@@ -4468,7 +4612,8 @@ final class ParserImpl implements Parser {
                 // - A combination of the above:                E.g. ((select 1) + 2, ((select 1) except (select 2)) + 2)
                 int position = ctx.position();
                 try {
-                    if (peekKeyword(ctx, "SELECT", false, true, false)) {
+                    if (peekKeyword(ctx, "SELECT", false, true, false) ||
+                        peekKeyword(ctx, "SEL", false, true, false)) {
                         SelectQueryImpl<Record> select = parseSelect(ctx);
                         if (select.getSelect().size() > 1)
                             throw ctx.exception("Select list must contain at most one column");
@@ -4514,6 +4659,128 @@ final class ParserImpl implements Parser {
 
         else
             return parseFieldNameOrSequenceExpression(ctx);
+    }
+
+    private static final Field<?> parseFieldShlIf(ParserContext ctx) {
+        if (parseKeywordIf(ctx, "SHL") || parseKeywordIf(ctx, "SHIFTLEFT")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return shl((Field) x, (Field) y);
+        }
+
+        return null;
+    }
+
+    private static final Field<?> parseFieldShrIf(ParserContext ctx) {
+        if (parseKeywordIf(ctx, "SHR") || parseKeywordIf(ctx, "SHIFTRIGHT")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return shr((Field) x, (Field) y);
+        }
+
+        return null;
+    }
+
+    private static final Field<?> parseFieldBitwiseFunctionIf(ParserContext ctx) {
+        int position = ctx.position();
+
+        char c1 = ctx.character(position + 1);
+        char c2 = ctx.character(position + 2);
+
+        if (c1 != 'I' && c1 != 'i')
+            return null;
+        if (c2 != 'T' && c2 != 't' && c2 != 'N' && c2 != 'n')
+            return null;
+
+        if (parseKeywordIf(ctx, "BIT_AND") || parseKeywordIf(ctx, "BITAND") || parseKeywordIf(ctx, "BIN_AND")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return bitAnd((Field) x, (Field) y);
+        }
+        else if (parseKeywordIf(ctx, "BIT_NAND") || parseKeywordIf(ctx, "BITNAND") || parseKeywordIf(ctx, "BIN_NAND")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return bitNand((Field) x, (Field) y);
+        }
+        else if (parseKeywordIf(ctx, "BIT_OR") || parseKeywordIf(ctx, "BITOR") || parseKeywordIf(ctx, "BIN_OR")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return bitOr((Field) x, (Field) y);
+        }
+        else if (parseKeywordIf(ctx, "BIT_NOR") || parseKeywordIf(ctx, "BITNOR") || parseKeywordIf(ctx, "BIN_NOR")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return bitNor((Field) x, (Field) y);
+        }
+        else if (parseKeywordIf(ctx, "BIT_XOR") || parseKeywordIf(ctx, "BITXOR") || parseKeywordIf(ctx, "BIN_XOR")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return bitXor((Field) x, (Field) y);
+        }
+        else if (parseKeywordIf(ctx, "BIT_XNOR") || parseKeywordIf(ctx, "BITXNOR") || parseKeywordIf(ctx, "BIN_XNOR")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return bitXNor((Field) x, (Field) y);
+        }
+        else if (parseKeywordIf(ctx, "BIT_NOT") || parseKeywordIf(ctx, "BITNOT") || parseKeywordIf(ctx, "BIN_NOT")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return bitNot((Field) x);
+        }
+        else if (parseKeywordIf(ctx, "BIN_SHL")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return shl((Field) x, (Field) y);
+        }
+        else if (parseKeywordIf(ctx, "BIN_SHR")) {
+            parse(ctx, '(');
+            Field<?> x = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ',');
+            Field<?> y = toField(ctx, parseSum(ctx, N));
+            parse(ctx, ')');
+
+            return shr((Field) x, (Field) y);
+        }
+
+        return null;
     }
 
     private static final Field<?> parseNextValueIf(ParserContext ctx) {
@@ -4813,6 +5080,28 @@ final class ParserImpl implements Parser {
         }
     }
 
+    private static final Field<?> parseFieldIntervalLiteralIf(ParserContext ctx) {
+        if (parseKeywordIf(ctx, "INTERVAL"))
+            return inline(parseIntervalLiteral(ctx));
+
+        return null;
+    }
+
+    private static final Interval parseIntervalLiteral(ParserContext ctx) {
+        String string = parseStringLiteral(ctx);
+
+        DayToSecond ds = DayToSecond.valueOf(string);
+        if (ds != null)
+            return ds;
+
+        YearToMonth ym = YearToMonth.valueOf(string);
+
+        if (ym != null)
+            return ym;
+
+        throw ctx.exception("Illegal interval literal");
+    }
+
     private static final Field<?> parseFieldDateLiteralIf(ParserContext ctx) {
         if (parseKeywordIf(ctx, "DATE")) {
             if (parseIf(ctx, '(')) {
@@ -4841,7 +5130,6 @@ final class ParserImpl implements Parser {
 
         return null;
     }
-
 
     private static final Date parseDateLiteral(ParserContext ctx) {
         try {
@@ -4985,7 +5273,10 @@ final class ParserImpl implements Parser {
     }
 
     private static final Field<?> parseFieldReplaceIf(ParserContext ctx) {
-        if (parseFunctionNameIf(ctx, "REPLACE")) {
+        if (parseFunctionNameIf(ctx, "REPLACE") ||
+            parseFunctionNameIf(ctx, "OREPLACE") ||
+            parseFunctionNameIf(ctx, "STR_REPLACE")) {
+
             parse(ctx, '(');
             Field<String> f1 = (Field) parseField(ctx, S);
             parse(ctx, ',');
@@ -5702,7 +5993,7 @@ final class ParserImpl implements Parser {
             parse(ctx, '(');
 
             if (parseIf(ctx, ')'))
-                return parseWindowFunction(ctx, null, rank());
+                return parseWindowFunction(ctx, null, null, rank());
 
             // Hypothetical set function
             List<Field<?>> args = parseFields(ctx);
@@ -5718,7 +6009,7 @@ final class ParserImpl implements Parser {
             parse(ctx, '(');
 
             if (parseIf(ctx, ')'))
-                return parseWindowFunction(ctx, null, denseRank());
+                return parseWindowFunction(ctx, null, null, denseRank());
 
             // Hypothetical set function
             List<Field<?>> args = parseFields(ctx);
@@ -5734,7 +6025,7 @@ final class ParserImpl implements Parser {
             parse(ctx, '(');
 
             if (parseIf(ctx, ')'))
-                return parseWindowFunction(ctx, null, percentRank());
+                return parseWindowFunction(ctx, null, null, percentRank());
 
             // Hypothetical set function
             List<Field<?>> args = parseFields(ctx);
@@ -5750,7 +6041,7 @@ final class ParserImpl implements Parser {
             parse(ctx, '(');
 
             if (parseIf(ctx, ')'))
-                return parseWindowFunction(ctx, null, cumeDist());
+                return parseWindowFunction(ctx, null, null, cumeDist());
 
             // Hypothetical set function
             List<Field<?>> args = parseFields(ctx);
@@ -5765,7 +6056,7 @@ final class ParserImpl implements Parser {
         if (parseFunctionNameIf(ctx, "ROW_NUMBER")) {
             parse(ctx, '(');
             parse(ctx, ')');
-            return parseWindowFunction(ctx, null, rowNumber());
+            return parseWindowFunction(ctx, null, null, rowNumber());
         }
 
         return null;
@@ -5776,7 +6067,7 @@ final class ParserImpl implements Parser {
             parse(ctx, '(');
             int number = (int) (long) parseUnsignedInteger(ctx);
             parse(ctx, ')');
-            return parseWindowFunction(ctx, null, ntile(number));
+            return parseWindowFunction(ctx, null, null, ntile(number));
         }
 
         return null;
@@ -5800,7 +6091,7 @@ final class ParserImpl implements Parser {
                 }
             }
             parse(ctx, ')');
-            return parseWindowFunction(ctx, lead
+            return parseWindowFunction(ctx, null, lead
                 ? f2 == null
                     ? lead(f1)
                     : f3 == null
@@ -5821,7 +6112,7 @@ final class ParserImpl implements Parser {
             parse(ctx, '(');
             Field<Void> arg = (Field) parseField(ctx);
             parse(ctx, ')');
-            return parseWindowFunction(ctx, firstValue(arg), null);
+            return parseWindowFunction(ctx, null, firstValue(arg), null);
         }
 
         return null;
@@ -5832,7 +6123,7 @@ final class ParserImpl implements Parser {
             parse(ctx, '(');
             Field<Void> arg = (Field) parseField(ctx);
             parse(ctx, ')');
-            return parseWindowFunction(ctx, lastValue(arg), null);
+            return parseWindowFunction(ctx, null, lastValue(arg), null);
         }
 
         return null;
@@ -5845,15 +6136,29 @@ final class ParserImpl implements Parser {
             parse(ctx, ',');
             int f2 = (int) (long) parseUnsignedInteger(ctx);
             parse(ctx, ')');
-            return parseWindowFunction(ctx, nthValue(f1, f2), null);
+            return parseWindowFunction(ctx, nthValue(f1, f2), null, null);
         }
 
         return null;
     }
 
-    private static final Field<?> parseWindowFunction(ParserContext ctx, WindowIgnoreNullsStep s1, WindowOverStep<?> s2) {
+    private static final Field<?> parseWindowFunction(ParserContext ctx, WindowFromFirstLastStep s1, WindowIgnoreNullsStep s2, WindowOverStep<?> s3) {
         if (s1 != null) {
+            if (parseKeywordIf(ctx, "FROM FIRST") && ctx.requireProEdition())
 
+
+
+                ;
+            else if (parseKeywordIf(ctx, "FROM LAST") && ctx.requireProEdition())
+
+
+
+                ;
+            else
+                s2 = s1;
+        }
+
+        if (s2 != null) {
             if (parseKeywordIf(ctx, "RESPECT NULLS") && ctx.requireProEdition())
 
 
@@ -5865,7 +6170,7 @@ final class ParserImpl implements Parser {
 
                 ;
             else
-                s2 = s1;
+                s3 = s2;
         }
 
         parseKeyword(ctx, "OVER");
@@ -5873,10 +6178,10 @@ final class ParserImpl implements Parser {
 
         // https://bugs.eclipse.org/bugs/show_bug.cgi?id=494897
         Field<?> result = (nameOrSpecification instanceof Name)
-            ? s2.over((Name) nameOrSpecification)
+            ? s3.over((Name) nameOrSpecification)
             : (nameOrSpecification instanceof WindowSpecification)
-            ? s2.over((WindowSpecification) nameOrSpecification)
-            : s2.over();
+            ? s3.over((WindowSpecification) nameOrSpecification)
+            : s3.over();
 
         return result;
     }
@@ -6701,16 +7006,43 @@ final class ParserImpl implements Parser {
     private static final DataType<?> parseDataTypeEnum(ParserContext ctx) {
         parse(ctx, '(');
         List<String> literals = new ArrayList<String>();
+        int length = 0;
 
         do {
-            literals.add(parseStringLiteral(ctx));
+            String literal = parseStringLiteral(ctx);
+
+            if (literal != null)
+                length = Math.max(length, literal.length());
+
+            literals.add(literal);
         }
         while (parseIf(ctx, ','));
 
         parse(ctx, ')');
 
         // [#7025] TODO, replace this by a dynamic enum data type encoding, once available
-        return SQLDataType.VARCHAR;
+        String className = "GeneratedEnum" + (literals.hashCode() & 0x7FFFFFF);
+        return SQLDataType.VARCHAR(length)
+
+            .asEnumDataType(Reflect
+                .compile(
+                    "org.jooq.impl." + className,
+                    "package org.jooq.impl;\n"
+                  + "enum " + className + " implements org.jooq.EnumType {\n"
+                  + "  " + String.join(", ", literals) + ";\n"
+                  + "  @Override\n"
+                  + "  public String getName() {\n"
+                  + "    return getClass().getName();\n"
+                  + "  }\n"
+                  + "  @Override\n"
+                  + "  public String getLiteral() {\n"
+                  + "    return name();"
+                  + "  }\n"
+                  + "}")
+                .get()
+            )
+
+        ;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -7764,6 +8096,13 @@ final class ParserContext {
     boolean requireProEdition() {
         if (!PRO_EDITION)
             throw exception("Feature only supported in pro edition");
+
+        return true;
+    }
+
+    boolean requireUnsupportedSyntax() {
+        if (dsl.configuration().settings().getParseUnsupportedSyntax() == ParseUnsupportedSyntax.FAIL)
+            throw exception("Syntax not supported");
 
         return true;
     }

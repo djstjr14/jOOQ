@@ -42,6 +42,7 @@ import static java.lang.Boolean.TRUE;
 import static java.lang.Character.isJavaIdentifierPart;
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.CUBRID;
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
@@ -229,6 +230,7 @@ import org.jooq.conf.BackslashEscaping;
 import org.jooq.conf.Settings;
 import org.jooq.conf.ThrowExceptions;
 import org.jooq.exception.DataAccessException;
+import org.jooq.exception.DataTypeException;
 import org.jooq.exception.MappingException;
 import org.jooq.exception.NoDataFoundException;
 import org.jooq.exception.TooManyRowsException;
@@ -267,6 +269,7 @@ final class Tools {
     static final int[]                      EMPTY_INT                     = {};
     static final Name[]                     EMPTY_NAME                    = {};
     static final Param<?>[]                 EMPTY_PARAM                   = {};
+    static final OrderField<?>[]            EMPTY_ORDERFIELD              = {};
     static final Query[]                    EMPTY_QUERY                   = {};
     static final QueryPart[]                EMPTY_QUERYPART               = {};
     static final Record[]                   EMPTY_RECORD                  = {};
@@ -636,7 +639,7 @@ final class Tools {
     private static final char[]   HEX_DIGITS                                   = "0123456789abcdef".toCharArray();
 
     private static final EnumSet<SQLDialect> REQUIRES_BACKSLASH_ESCAPING       = EnumSet.of(MARIADB, MYSQL);
-    private static final EnumSet<SQLDialect> NO_SUPPORT_NULL                   = EnumSet.of(DERBY, FIREBIRD);
+    private static final EnumSet<SQLDialect> NO_SUPPORT_NULL                   = EnumSet.of(DERBY, FIREBIRD, HSQLDB);
     private static final EnumSet<SQLDialect> NO_SUPPORT_BINARY_TYPE_LENGTH     = EnumSet.of(POSTGRES);
     private static final EnumSet<SQLDialect> DEFAULT_BEFORE_NULL               = EnumSet.of(FIREBIRD, HSQLDB);
     private static final EnumSet<SQLDialect> SUPPORT_MYSQL_SYNTAX              = EnumSet.of(MARIADB, MYSQL);
@@ -1702,11 +1705,31 @@ final class Tools {
      *             element
      */
     static final <R extends Record> R fetchOne(Cursor<R> cursor) throws TooManyRowsException {
+        return fetchOne(cursor, false);
+    }
+
+    /**
+     * Get the only element from a cursor or <code>null</code>, or throw an
+     * exception.
+     * <p>
+     * [#2373] This method will always close the argument cursor, as it is
+     * supposed to be completely consumed by this method.
+     *
+     * @param cursor The cursor
+     * @param hasLimit1 Whether a LIMIT clause is present that guarantees at
+     *            most one row
+     * @return The only element from the cursor or <code>null</code>
+     * @throws TooManyRowsException Thrown if the cursor returns more than one
+     *             element
+     */
+    static final <R extends Record> R fetchOne(Cursor<R> cursor, boolean hasLimit1) throws TooManyRowsException {
         try {
 
             // [#7001] Fetching at most two rows rather than at most one row
             //         (and then checking of additional rows) improves debug logs
-            Result<R> result = cursor.fetchNext(2);
+            // [#7430] Avoid fetching the second row (additional overhead) if
+            //         there is a guarantee of at most one row
+            Result<R> result = cursor.fetchNext(hasLimit1 ? 1 : 2);
             int size = result.size();
 
             if (size == 0)
@@ -1734,11 +1757,31 @@ final class Tools {
      *             element
      */
     static final <R extends Record> R fetchSingle(Cursor<R> cursor) throws NoDataFoundException, TooManyRowsException {
+        return fetchSingle(cursor, false);
+    }
+
+    /**
+     * Get the only element from a cursor, or throw an exception.
+     * <p>
+     * [#2373] This method will always close the argument cursor, as it is
+     * supposed to be completely consumed by this method.
+     *
+     * @param cursor The cursor
+     * @param hasLimit1 Whether a LIMIT clause is present that guarantees at
+     *            most one row
+     * @return The only element from the cursor
+     * @throws NoDataFoundException Thrown if the cursor did not return any rows
+     * @throws TooManyRowsException Thrown if the cursor returns more than one
+     *             element
+     */
+    static final <R extends Record> R fetchSingle(Cursor<R> cursor, boolean hasLimit1) throws NoDataFoundException, TooManyRowsException {
         try {
 
             // [#7001] Fetching at most two rows rather than at most one row
             //         (and then checking of additional rows) improves debug logs
-            Result<R> result = cursor.fetchNext(2);
+            // [#7430] Avoid fetching the second row (additional overhead) if
+            //         there is a guarantee of at most one row
+            Result<R> result = cursor.fetchNext(hasLimit1 ? 1 : 2);
             int size = result.size();
 
             if (size == 0)
@@ -2330,9 +2373,8 @@ final class Tools {
         ctx.resultSet(null);
 
         PreparedStatement statement = ctx.statement();
-        if (statement != null) {
+        if (statement != null)
             consumeWarnings(ctx, listener);
-        }
 
         // [#385] Close statements only if not requested to keep open
         if (!keepStatement) {
@@ -2346,9 +2388,11 @@ final class Tools {
             else {
                 Connection connection = localConnection();
 
-                if (connection != null) {
-                    ctx.configuration().connectionProvider().release(connection);
-                }
+                // [#4277] We must release the connection on the ExecuteContext's
+                //         ConnectionProvider, as the ctx.configuration().connectionProvider()
+                //         is replaced by a ExecuteContextConnectionProvider instance.
+                if (connection != null && ((DefaultExecuteContext) ctx).connectionProvider != null)
+                    ((DefaultExecuteContext) ctx).connectionProvider.release(connection);
             }
         }
 
@@ -4047,7 +4091,7 @@ final class Tools {
             ctx.sql(' ').visit(K_NOT_NULL);
 
             // Some databases default to NOT NULL, so explicitly setting columns to NULL is mostly required here
-            // [#3400] [#4321] ... but not in Derby, Firebird
+            // [#3400] [#4321] [#7392] ... but not in Derby, Firebird, HSQLDB
         else if (!NO_SUPPORT_NULL.contains(ctx.family()))
             ctx.sql(' ').visit(K_NULL);
 
@@ -4094,6 +4138,7 @@ final class Tools {
 
 
 
+
                 case H2:
                 case MARIADB:
                 case MYSQL:  ctx.sql(' ').visit(K_AUTO_INCREMENT); break;
@@ -4107,7 +4152,6 @@ final class Tools {
     }
 
     static final void toSQLDDLTypeDeclaration(Context<?> ctx, DataType<?> type) {
-        String typeName = type.getTypeName(ctx.configuration());
 
         // In some databases, identity is a type, not a flag.
         if (type.identity()) {
@@ -4123,14 +4167,19 @@ final class Tools {
 
         // [#5299] MySQL enum types
         if (EnumType.class.isAssignableFrom(type.getType())) {
+
+            @SuppressWarnings("unchecked")
+            DataType<EnumType> enumType = (DataType<EnumType>) type;
+            Object[] enums = enumConstants(enumType);
+
             switch (ctx.family()) {
+
+
+
+
                 case MARIADB:
                 case MYSQL: {
                     ctx.visit(K_ENUM).sql('(');
-
-                    Object[] enums = type.getType().getEnumConstants();
-                    if (enums == null)
-                        throw new IllegalStateException("EnumType must be a Java enum");
 
                     String separator = "";
                     for (Object e : enums) {
@@ -4140,6 +4189,11 @@ final class Tools {
 
                     ctx.sql(')');
                     return;
+                }
+
+                default: {
+                    type = emulateEnumType(enumType, enums);
+                    break;
                 }
             }
         }
@@ -4155,6 +4209,7 @@ final class Tools {
             }
         }
 
+        String typeName = type.getTypeName(ctx.configuration());
         if (type.hasLength()) {
 
             // [#6289] [#7191] Some databases don't support lengths on binary types
@@ -4191,6 +4246,28 @@ final class Tools {
 
         if (type.collation() != null)
             ctx.sql(' ').visit(K_COLLATE).sql(' ').visit(type.collation());
+    }
+
+    private static Object[] enumConstants(DataType<? extends EnumType> type) {
+        Object[] enums = type.getType().getEnumConstants();
+
+        if (enums == null)
+            throw new DataTypeException("EnumType must be a Java enum");
+
+        return enums;
+    }
+
+    static final DataType<String> emulateEnumType(DataType<? extends EnumType> type) {
+        return emulateEnumType(type, enumConstants(type));
+    }
+
+    static final DataType<String> emulateEnumType(DataType<? extends EnumType> type, Object[] enums) {
+        int length = 0;
+        for (Object e : enums)
+            if (((EnumType) e).getLiteral() != null)
+                length = Math.max(length, ((EnumType) e).getLiteral().length());
+
+        return VARCHAR(length).nullability(type.nullability()).defaultValue((Field) type.defaultValue());
     }
 
     // -------------------------------------------------------------------------
@@ -4238,7 +4315,17 @@ final class Tools {
     }
 
 
-    static <E extends EnumType> EnumType[] enums(Class<? extends E> type) {
+    static String[] enumLiterals(Class<? extends EnumType> type) {
+        EnumType[] values = enums(type);
+        String[] result = new String[values.length];
+
+        for (int i = 0; i < values.length; i++)
+            result[i] = values[i].getLiteral();
+
+        return result;
+    }
+
+    static <E extends EnumType> E[] enums(Class<? extends E> type) {
 
         // Java implementation
         if (Enum.class.isAssignableFrom(type)) {
@@ -4254,7 +4341,7 @@ final class Tools {
                 Class<?> companionClass = Thread.currentThread().getContextClassLoader().loadClass(type.getName() + "$");
                 java.lang.reflect.Field module = companionClass.getField("MODULE$");
                 Object companion = module.get(companionClass);
-                return (EnumType[]) companionClass.getMethod("values").invoke(companion);
+                return (E[]) companionClass.getMethod("values").invoke(companion);
             }
             catch (Exception e) {
                 throw new MappingException("Error while looking up Scala enum", e);

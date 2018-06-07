@@ -96,9 +96,4 @@ public final class Mock {
 
         return result;
     }
-
-    /**
-     * No instances
-     */
-    private Mock() {}
 }

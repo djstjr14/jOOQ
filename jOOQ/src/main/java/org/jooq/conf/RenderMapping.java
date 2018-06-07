@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 package org.jooq.conf;
 
 import java.io.Serializable;
@@ -18,6 +10,12 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 
+
+
+/* Refactoring
+ * - Self Encapsulate Field
+ * - Added methods that checks empty variable for better understandability
+ * */
 
 /**
  * The runtime schema and table mapping.
@@ -121,6 +119,13 @@ public class RenderMapping
         }
         return sb.toString();
     }
+    
+    public boolean isEmptySchema(RenderMapping value) {
+    	return value.getSchemata()==null;
+    }
+    public boolean isEmptyDefaultSchema(RenderMapping value) {
+    	return value.getDefaultSchema()==null;
+    }
 
     @Override
     public boolean equals(Object that) {
@@ -134,8 +139,8 @@ public class RenderMapping
             return false;
         }
         RenderMapping other = ((RenderMapping) that);
-        if (defaultSchema == null) {
-            if (other.defaultSchema!= null) {
+        if (isEmptyDefaultSchema(this)) {
+            if (!isEmptyDefaultSchema(other)) {
                 return false;
             }
         } else {
@@ -143,8 +148,8 @@ public class RenderMapping
                 return false;
             }
         }
-        if (schemata == null) {
-            if (other.schemata!= null) {
+        if (isEmptySchema(this)) {
+            if (!isEmptySchema(other)) {
                 return false;
             }
         } else {
@@ -159,8 +164,8 @@ public class RenderMapping
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = ((prime*result)+((defaultSchema == null)? 0 :defaultSchema.hashCode()));
-        result = ((prime*result)+((schemata == null)? 0 :schemata.hashCode()));
+        result = ((prime*result)+((this.getDefaultSchema() == null)? 0 :this.getDefaultSchema().hashCode()));
+        result = ((prime*result)+((this.getSchemata() == null)? 0 :this.getSchemata().hashCode()));
         return result;
     }
 

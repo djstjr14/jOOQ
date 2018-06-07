@@ -42,6 +42,7 @@ import static org.jooq.Operator.AND;
 import static org.jooq.Operator.OR;
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
@@ -64,6 +65,7 @@ import static org.jooq.SQLDialect.POSTGRES_9_4;
 import static org.jooq.SQLDialect.POSTGRES_9_5;
 // ...
 import static org.jooq.SQLDialect.SQLITE;
+// ...
 // ...
 // ...
 // ...
@@ -309,6 +311,7 @@ import org.jooq.UDTRecord;
 import org.jooq.Update;
 import org.jooq.UpdateSetFirstStep;
 import org.jooq.User;
+import org.jooq.WindowFromFirstLastStep;
 import org.jooq.WindowIgnoreNullsStep;
 import org.jooq.WindowOverStep;
 import org.jooq.WindowSpecification;
@@ -1767,9 +1770,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1789,9 +1789,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1811,9 +1808,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1833,9 +1827,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1855,9 +1846,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1877,9 +1865,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1899,9 +1884,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1921,9 +1903,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1943,9 +1922,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1965,9 +1941,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -1987,9 +1960,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2009,9 +1979,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2031,9 +1998,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2053,9 +2017,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2075,9 +2036,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2097,9 +2055,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2119,9 +2074,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2141,9 +2093,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2163,9 +2112,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2185,9 +2131,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2207,9 +2150,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2229,9 +2169,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2251,9 +2188,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2273,9 +2207,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2295,9 +2226,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2317,9 +2245,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2339,9 +2264,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2361,9 +2283,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2383,9 +2302,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2405,9 +2321,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2427,9 +2340,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2449,9 +2359,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2471,9 +2378,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2493,9 +2397,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2515,9 +2416,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2537,9 +2435,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2559,9 +2454,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2581,9 +2473,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2603,9 +2492,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2625,9 +2511,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2647,9 +2530,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2669,9 +2549,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2691,9 +2568,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -2713,9 +2587,6 @@ public class DSL {
      * {@link #with(String, String...)} for strictly non-recursive CTE
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
-     * <p>
-     * Note that the {@link SQLDialect#H2} database only supports single-table,
-     * <code>RECURSIVE</code> common table expression lists.
      */
     @Generated("This method was generated using jOOQ-tools")
     @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
@@ -8661,17 +8532,13 @@ public class DSL {
      */
     @Support({ H2, HSQLDB, POSTGRES })
     public static Table<?> unnest(Field<?> cursor) {
-        if (cursor == null) {
+        if (cursor == null)
             throw new IllegalArgumentException();
-        }
 
         // The field is an actual CURSOR or REF CURSOR returned from a stored
         // procedure or from a NESTED TABLE
-        else if (cursor.getType() == Result.class) {
+        else if (cursor.getType() == Result.class)
             return new org.jooq.impl.FunctionTable<Record>(cursor);
-        }
-
-
 
 
 
@@ -8684,9 +8551,8 @@ public class DSL {
 
 
         // The field is a regular array
-        else if (cursor.getType().isArray() && cursor.getType() != byte[].class) {
+        else if (cursor.getType().isArray() && cursor.getType() != byte[].class)
             return new ArrayTable(cursor);
-        }
 
         // The field has any other type. Try to make it an array
         throw new SQLDialectNotSupportedException("Converting arbitrary types into array tables is currently not supported");
@@ -8791,6 +8657,158 @@ public class DSL {
     @Support({ CUBRID, POSTGRES })
     public static Table<Record1<Integer>> generateSeries(Field<Integer> from, Field<Integer> to) {
         return new GenerateSeries(nullSafe(from), nullSafe(to));
+    }
+
+    /**
+     * A table function generating a series of values from <code>from</code> to
+     * <code>to</code> (inclusive), increasing values by <code>step</code>.
+     * <p>
+     * This function is inspired by PostgreSQL's
+     * <code>GENERATE_SERIES(from, to, step)</code> function. Other SQL dialects
+     * may be capable of emulating this behaviour, e.g. Oracle: <code><pre>
+     * -- PostgreSQL
+     * SELECT * FROM GENERATE_SERIES(a, b, c)
+     *
+     * -- Oracle
+     * SELECT * FROM (SELECT a + LEVEL * c- 1 FROM DUAL CONNECT BY a + LEVEL * c - 1 &lt;= b)
+     * </pre></code>
+     */
+    @Support({ CUBRID, POSTGRES })
+    public static Table<Record1<Integer>> generateSeries(int from, int to, int step) {
+        return generateSeries(val(from), val(to), val(step));
+    }
+
+    /**
+     * A table function generating a series of values from <code>from</code> to
+     * <code>to</code> (inclusive), increasing values by <code>step</code>.
+     * <p>
+     * This function is inspired by PostgreSQL's
+     * <code>GENERATE_SERIES(from, to, step)</code> function. Other SQL dialects may
+     * be capable of emulating this behaviour, e.g. Oracle: <code><pre>
+     * -- PostgreSQL
+     * SELECT * FROM GENERATE_SERIES(a, b, c)
+     *
+     * -- Oracle
+     * SELECT * FROM (SELECT a + LEVEL * c - 1 FROM DUAL CONNECT BY a + LEVEL * c - 1 &lt;= b)
+     * </pre></code>
+     */
+    @Support({ CUBRID, POSTGRES })
+    public static Table<Record1<Integer>> generateSeries(int from, Field<Integer> to, int step) {
+        return generateSeries(val(from), nullSafe(to), val(step));
+    }
+
+    /**
+     * A table function generating a series of values from <code>from</code> to
+     * <code>to</code> (inclusive), increasing values by <code>step</code>.
+     * <p>
+     * This function is inspired by PostgreSQL's
+     * <code>GENERATE_SERIES(from, to, step)</code> function. Other SQL dialects may
+     * be capable of emulating this behaviour, e.g. Oracle: <code><pre>
+     * -- PostgreSQL
+     * SELECT * FROM GENERATE_SERIES(a, b, c)
+     *
+     * -- Oracle
+     * SELECT * FROM (SELECT a + LEVEL * c - 1 FROM DUAL CONNECT BY a + LEVEL * c - 1 &lt;= b)
+     * </pre></code>
+     */
+    @Support({ CUBRID, POSTGRES })
+    public static Table<Record1<Integer>> generateSeries(Field<Integer> from, int to, int step) {
+        return new GenerateSeries(nullSafe(from), val(to), val(step));
+    }
+
+    /**
+     * A table function generating a series of values from <code>from</code> to
+     * <code>to</code> (inclusive), increasing values by <code>step</code>.
+     * <p>
+     * This function is inspired by PostgreSQL's
+     * <code>GENERATE_SERIES(from, to, step)</code> function. Other SQL dialects may
+     * be capable of emulating this behaviour, e.g. Oracle: <code><pre>
+     * -- PostgreSQL
+     * SELECT * FROM GENERATE_SERIES(a, b, c)
+     *
+     * -- Oracle
+     * SELECT * FROM (SELECT a + LEVEL * c - 1 FROM DUAL CONNECT BY a + LEVEL * c - 1 &lt;= b)
+     * </pre></code>
+     */
+    @Support({ CUBRID, POSTGRES })
+    public static Table<Record1<Integer>> generateSeries(Field<Integer> from, Field<Integer> to, int step) {
+        return new GenerateSeries(nullSafe(from), nullSafe(to), val(step));
+    }
+
+    /**
+     * A table function generating a series of values from <code>from</code> to
+     * <code>to</code> (inclusive), increasing values by <code>step</code>.
+     * <p>
+     * This function is inspired by PostgreSQL's
+     * <code>GENERATE_SERIES(from, to, step)</code> function. Other SQL dialects
+     * may be capable of emulating this behaviour, e.g. Oracle: <code><pre>
+     * -- PostgreSQL
+     * SELECT * FROM GENERATE_SERIES(a, b, c)
+     *
+     * -- Oracle
+     * SELECT * FROM (SELECT a + LEVEL * c- 1 FROM DUAL CONNECT BY a + LEVEL * c - 1 &lt;= b)
+     * </pre></code>
+     */
+    @Support({ CUBRID, POSTGRES })
+    public static Table<Record1<Integer>> generateSeries(int from, int to, Field<Integer> step) {
+        return generateSeries(val(from), val(to), nullSafe(step));
+    }
+
+    /**
+     * A table function generating a series of values from <code>from</code> to
+     * <code>to</code> (inclusive), increasing values by <code>step</code>.
+     * <p>
+     * This function is inspired by PostgreSQL's
+     * <code>GENERATE_SERIES(from, to, step)</code> function. Other SQL dialects may
+     * be capable of emulating this behaviour, e.g. Oracle: <code><pre>
+     * -- PostgreSQL
+     * SELECT * FROM GENERATE_SERIES(a, b, c)
+     *
+     * -- Oracle
+     * SELECT * FROM (SELECT a + LEVEL * c - 1 FROM DUAL CONNECT BY a + LEVEL * c - 1 &lt;= b)
+     * </pre></code>
+     */
+    @Support({ CUBRID, POSTGRES })
+    public static Table<Record1<Integer>> generateSeries(int from, Field<Integer> to, Field<Integer> step) {
+        return generateSeries(val(from), nullSafe(to), nullSafe(step));
+    }
+
+    /**
+     * A table function generating a series of values from <code>from</code> to
+     * <code>to</code> (inclusive), increasing values by <code>step</code>.
+     * <p>
+     * This function is inspired by PostgreSQL's
+     * <code>GENERATE_SERIES(from, to, step)</code> function. Other SQL dialects may
+     * be capable of emulating this behaviour, e.g. Oracle: <code><pre>
+     * -- PostgreSQL
+     * SELECT * FROM GENERATE_SERIES(a, b, c)
+     *
+     * -- Oracle
+     * SELECT * FROM (SELECT a + LEVEL * c - 1 FROM DUAL CONNECT BY a + LEVEL * c - 1 &lt;= b)
+     * </pre></code>
+     */
+    @Support({ CUBRID, POSTGRES })
+    public static Table<Record1<Integer>> generateSeries(Field<Integer> from, int to, Field<Integer> step) {
+        return new GenerateSeries(nullSafe(from), val(to), nullSafe(step));
+    }
+
+    /**
+     * A table function generating a series of values from <code>from</code> to
+     * <code>to</code> (inclusive), increasing values by <code>step</code>.
+     * <p>
+     * This function is inspired by PostgreSQL's
+     * <code>GENERATE_SERIES(from, to, step)</code> function. Other SQL dialects may
+     * be capable of emulating this behaviour, e.g. Oracle: <code><pre>
+     * -- PostgreSQL
+     * SELECT * FROM GENERATE_SERIES(a, b, c)
+     *
+     * -- Oracle
+     * SELECT * FROM (SELECT a + LEVEL * c - 1 FROM DUAL CONNECT BY a + LEVEL * c - 1 &lt;= b)
+     * </pre></code>
+     */
+    @Support({ CUBRID, POSTGRES })
+    public static Table<Record1<Integer>> generateSeries(Field<Integer> from, Field<Integer> to, Field<Integer> step) {
+        return new GenerateSeries(nullSafe(from), nullSafe(to), nullSafe(step));
     }
 
     /**
@@ -13048,7 +13066,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static Field<String> translate(Field<String> text, Field<String> from, Field<String> to) {
-        return function("translate", text.getDataType(), text, from, to);
+        return new Translate(text, from, to);
     }
 
     /**
@@ -13701,9 +13719,15 @@ public class DSL {
      * <td><code>MD5( ... )</code></td>
      * </tr>
      * <tr>
-     * <td>Oracle</td>
+     * <td>Oracle 11g</td>
      * <td>
      * <code>LOWER(RAWTOHEX(SYS.DBMS_CRYPTO.HASH(UTL_RAW.CAST_TO_RAW( ... ), SYS.DBMS_CRYPTO.HASH_MD5)))</code>
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>Oracle 12c</td>
+     * <td>
+     * <code>LOWER(STANDARD_HASH( ... , 'MD5'))</code>
      * </td>
      * </tr>
      * </table>
@@ -13728,9 +13752,15 @@ public class DSL {
      * <td><code>MD5( ... )</code></td>
      * </tr>
      * <tr>
-     * <td>Oracle</td>
+     * <td>Oracle 11g</td>
      * <td>
      * <code>LOWER(RAWTOHEX(SYS.DBMS_CRYPTO.HASH(UTL_RAW.CAST_TO_RAW( ... ), SYS.DBMS_CRYPTO.HASH_MD5)))</code>
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>Oracle 12c</td>
+     * <td>
+     * <code>LOWER(STANDARD_HASH( ... , 'MD5'))</code>
      * </td>
      * </tr>
      * </table>
@@ -14093,6 +14123,70 @@ public class DSL {
     }
 
     /**
+     * Subtract an interval from a timestamp.
+     * <p>
+     * This translates into any dialect
+     *
+     * @see Field#sub(Number)
+     */
+    @Support
+    public static Field<Timestamp> timestampSub(Timestamp timestamp, Number interval) {
+        return timestampSub(Tools.field(timestamp), Tools.field(interval));
+    }
+
+    /**
+     * Subtract an interval from a timestamp.
+     * <p>
+     * This translates into any dialect
+     *
+     * @see Field#sub(Field)
+     */
+    @Support
+    public static Field<Timestamp> timestampSub(Field<Timestamp> timestamp, Field<? extends Number> interval) {
+        return nullSafe(timestamp).sub(interval);
+    }
+
+    /**
+     * Subtract an interval from a timestamp, given a date part.
+     * <p>
+     * This translates into any dialect
+     */
+    @Support
+    public static Field<Timestamp> timestampSub(Timestamp date, Number interval, DatePart datePart) {
+        return new DateAdd<Timestamp>(Tools.field(date), Tools.field(interval).neg(), datePart);
+    }
+
+    /**
+     * Subtract an interval from a timestamp, given a date part.
+     * <p>
+     * This translates into any dialect
+     */
+    @Support
+    public static Field<Timestamp> timestampSub(Timestamp date, Field<? extends Number> interval, DatePart datePart) {
+        return new DateAdd<Timestamp>(Tools.field(date), nullSafe(interval).neg(), datePart);
+    }
+
+    /**
+     * Subtract an interval from a timestamp, given a date part.
+     * <p>
+     * This translates into any dialect
+     */
+    @Support
+    public static Field<Timestamp> timestampSub(Field<Timestamp> date, Number interval, DatePart datePart) {
+        return new DateAdd<Timestamp>(nullSafe(date), Tools.field(interval).neg(), datePart);
+    }
+
+    /**
+     * Subtract an interval from a timestamp, given a date part.
+     * <p>
+     * This translates into any dialect
+     */
+    @Support
+    public static Field<Timestamp> timestampSub(Field<Timestamp> date, Field<? extends Number> interval, DatePart datePart) {
+        return new DateAdd<Timestamp>(nullSafe(date), nullSafe(interval).neg(), datePart);
+    }
+
+    /**
      * Get the timestamp difference as a <code>INTERVAL DAY TO SECOND</code>
      * type.
      * <p>
@@ -14384,6 +14478,70 @@ public class DSL {
     @Support
     public static Field<LocalDateTime> localDateTimeAdd(Field<LocalDateTime> date, Field<? extends Number> interval, DatePart datePart) {
         return new DateAdd<LocalDateTime>(nullSafe(date), nullSafe(interval), datePart);
+    }
+
+    /**
+     * Subtract an interval from a timestamp.
+     * <p>
+     * This translates into any dialect
+     *
+     * @see Field#sub(Number)
+     */
+    @Support
+    public static Field<LocalDateTime> localDateTimeSub(LocalDateTime timestamp, Number interval) {
+        return localDateTimeSub(Tools.field(timestamp), Tools.field(interval));
+    }
+
+    /**
+     * Subtract an interval from a timestamp.
+     * <p>
+     * This translates into any dialect
+     *
+     * @see Field#sub(Field)
+     */
+    @Support
+    public static Field<LocalDateTime> localDateTimeSub(Field<LocalDateTime> timestamp, Field<? extends Number> interval) {
+        return nullSafe(timestamp).sub(interval);
+    }
+
+    /**
+     * Subtract an interval from a timestamp, given a date part.
+     * <p>
+     * This translates into any dialect
+     */
+    @Support
+    public static Field<LocalDateTime> localDateTimeSub(LocalDateTime date, Number interval, DatePart datePart) {
+        return new DateAdd<LocalDateTime>(Tools.field(date), Tools.field(interval).neg(), datePart);
+    }
+
+    /**
+     * Subtract an interval from a timestamp, given a date part.
+     * <p>
+     * This translates into any dialect
+     */
+    @Support
+    public static Field<LocalDateTime> localDateTimeSub(LocalDateTime date, Field<? extends Number> interval, DatePart datePart) {
+        return new DateAdd<LocalDateTime>(Tools.field(date), nullSafe(interval).neg(), datePart);
+    }
+
+    /**
+     * Subtract an interval from a timestamp, given a date part.
+     * <p>
+     * This translates into any dialect
+     */
+    @Support
+    public static Field<LocalDateTime> localDateTimeSub(Field<LocalDateTime> date, Number interval, DatePart datePart) {
+        return new DateAdd<LocalDateTime>(nullSafe(date), Tools.field(interval).neg(), datePart);
+    }
+
+    /**
+     * Subtract an interval from a timestamp, given a date part.
+     * <p>
+     * This translates into any dialect
+     */
+    @Support
+    public static Field<LocalDateTime> localDateTimeSub(Field<LocalDateTime> date, Field<? extends Number> interval, DatePart datePart) {
+        return new DateAdd<LocalDateTime>(nullSafe(date), nullSafe(interval).neg(), datePart);
     }
 
     /**
@@ -14954,7 +15112,7 @@ public class DSL {
      * UTC. Regardless of this fact, the result should be the same
      * {@link Instant} (in UTC) as the input.
      */
-    @Support({ POSTGRES })
+    @Support({ H2, POSTGRES })
     public static Field<OffsetTime> offsetTime(OffsetTime value) {
         return offsetTime(Tools.field(value));
     }
@@ -17788,7 +17946,7 @@ public class DSL {
      * The <code>nth_value(field) over ([analytic clause])</code> function.
      */
     @Support({ FIREBIRD_3_0, MYSQL_8_0, POSTGRES })
-    public static <T> WindowIgnoreNullsStep<T> nthValue(Field<T> field, int nth) {
+    public static <T> WindowFromFirstLastStep<T> nthValue(Field<T> field, int nth) {
         return nthValue(field, val(nth));
     }
 
@@ -17796,7 +17954,7 @@ public class DSL {
      * The <code>nth_value(field) over ([analytic clause])</code> function.
      */
     @Support({ FIREBIRD_3_0, MYSQL_8_0, POSTGRES })
-    public static <T> WindowIgnoreNullsStep<T> nthValue(Field<T> field, Field<Integer> nth) {
+    public static <T> WindowFromFirstLastStep<T> nthValue(Field<T> field, Field<Integer> nth) {
         return new org.jooq.impl.Function<T>("nth_value", nullSafeDataType(field), nullSafe(field), nullSafe(nth));
     }
 

@@ -59,6 +59,7 @@ import static org.jooq.Operator.OR;
 // ...
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
 // ...
@@ -76,6 +77,7 @@ import static org.jooq.SQLDialect.MYSQL;
 import static org.jooq.SQLDialect.POSTGRES;
 // ...
 import static org.jooq.SQLDialect.SQLITE;
+// ...
 // ...
 // ...
 // ...
@@ -200,6 +202,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     private static final EnumSet<SQLDialect>     SUPPORT_WINDOW_CLAUSE           = EnumSet.of(MYSQL, POSTGRES);
     private static final EnumSet<SQLDialect>     REQUIRES_FROM_CLAUSE            = EnumSet.of(CUBRID, DERBY, FIREBIRD, HSQLDB, MARIADB, MYSQL);
     private static final EnumSet<SQLDialect>     EMULATE_EMPTY_GROUP_BY_OTHER    = EnumSet.of(FIREBIRD, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE);
+
 
 
 
@@ -608,6 +611,8 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
 
 
+
+
                 case CUBRID:
                 case FIREBIRD_3_0:
                 case MYSQL:
@@ -701,6 +706,10 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
                 switch (family) {
 
                     // MySQL has a non-standard implementation for the "FOR SHARE" clause
+
+
+
+
                     case MARIADB:
                     case MYSQL:
                         context.formatSeparator()
@@ -902,15 +911,14 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
            .visit(getLimit().getLowerRownum());
 
         if (!getLimit().limitZero())
-        ctx.formatSeparator()
-           .visit(K_AND).sql(' ')
-           .visit(name("rn"))
-           .sql(" <= ")
-           .visit(getLimit().getUpperRownum());
+            ctx.formatSeparator()
+               .visit(K_AND).sql(' ')
+               .visit(name("rn"))
+               .sql(" <= ")
+               .visit(getLimit().getUpperRownum());
 
-        // [#5068] Don't rely on nested query's ordering. In most cases, the
-        //         ordering is stable, but in some cases (DISTINCT + JOIN) it is
-        //         not.
+        // [#5068] Don't rely on nested query's ordering in case an operation
+        //         like DISTINCT or JOIN produces hashing.
         if (!ctx.subquery())
             ctx.formatSeparator()
                .visit(K_ORDER_BY)
@@ -1439,14 +1447,14 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     }
 
     private final void toSQLOrderBy(
-            Context<?> context,
+            Context<?> ctx,
             Field<?>[] originalFields, Field<?>[] alternativeFields,
             boolean wrapQueryExpressionInDerivedTable, boolean wrapQueryExpressionBodyInDerivedTable,
             SortFieldList actualOrderBy,
             Limit actualLimit
     ) {
 
-        context.start(SELECT_ORDER_BY);
+        ctx.start(SELECT_ORDER_BY);
 
         // [#6197] When emulating WITH TIES using RANK() in a subquery, we must avoid rendering the
         //         subquery's ORDER BY clause
@@ -1460,14 +1468,14 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
         ) {
             if (!actualOrderBy.isEmpty()) {
-                context.formatSeparator()
-                       .visit(K_ORDER);
+                ctx.formatSeparator()
+                   .visit(K_ORDER);
 
                 if (orderBySiblings)
-                    context.sql(' ').visit(K_SIBLINGS);
+                    ctx.sql(' ').visit(K_SIBLINGS);
 
-                context.sql(' ').visit(K_BY)
-                       .sql(' ');
+                ctx.sql(' ').visit(K_BY)
+                   .sql(' ');
 
 
 
@@ -1489,7 +1497,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
 
                 {
-                    context.visit(actualOrderBy);
+                    ctx.visit(actualOrderBy);
                 }
             }
 
@@ -1506,15 +1514,15 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
         }
 
-        context.end(SELECT_ORDER_BY);
+        ctx.end(SELECT_ORDER_BY);
 
         if (wrapQueryExpressionInDerivedTable)
-            context.formatIndentEnd()
-                   .formatNewLine()
-                   .sql(") x");
+            ctx.formatIndentEnd()
+               .formatNewLine()
+               .sql(") x");
 
-        if (context.data().containsKey(DATA_RENDER_TRAILING_LIMIT_IF_APPLICABLE) && actualLimit.isApplicable())
-            context.visit(actualLimit);
+        if (ctx.data().containsKey(DATA_RENDER_TRAILING_LIMIT_IF_APPLICABLE) && actualLimit.isApplicable())
+            ctx.visit(actualLimit);
     }
 
     private final boolean wrapQueryExpressionBodyInDerivedTable(Context<?> ctx) {
@@ -1526,8 +1534,6 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
         ;
     }
-
-
 
 
 

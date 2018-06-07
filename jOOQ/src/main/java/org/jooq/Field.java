@@ -59,6 +59,7 @@ import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 // ...
+// ...
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -85,8 +86,7 @@ extends
     GroupField,
     OrderField<T>,
     FieldOrRow,
-    FieldOrConstraint,
-    Named {
+    FieldOrConstraint {
 
     // ------------------------------------------------------------------------
     // API
