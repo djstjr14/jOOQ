@@ -90,7 +90,6 @@ import org.jooq.Index;
 // ...
 import org.jooq.Name;
 import org.jooq.OrderField;
-import org.jooq.Package;
 import org.jooq.Parameter;
 import org.jooq.Record;
 import org.jooq.Result;
@@ -112,7 +111,6 @@ import org.jooq.impl.DAOImpl;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultDataType;
 import org.jooq.impl.Internal;
-import org.jooq.impl.PackageImpl;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.SchemaImpl;
 import org.jooq.impl.SequenceImpl;
@@ -121,7 +119,6 @@ import org.jooq.impl.TableRecordImpl;
 import org.jooq.impl.UDTImpl;
 import org.jooq.impl.UDTRecordImpl;
 import org.jooq.impl.UpdatableRecordImpl;
-import org.jooq.meta.AbstractTypedElementDefinition;
 import org.jooq.meta.ArrayDefinition;
 import org.jooq.meta.AttributeDefinition;
 import org.jooq.meta.CatalogDefinition;
@@ -156,6 +153,7 @@ import org.jooq.tools.StopWatch;
 import org.jooq.tools.StringUtils;
 import org.jooq.tools.reflect.Reflect;
 import org.jooq.tools.reflect.ReflectException;
+import org.jooq.util.xml.jaxb.Column;
 // ...
 // ...
 
@@ -2565,6 +2563,9 @@ public class JavaGenerator extends AbstractGenerator {
             return;
         }
 
+        
+        List<ColumnDefinition> keyColumns = key.getKeyColumns();
+        
         final String className = getStrategy().getJavaClassName(table, Mode.DAO);
         final List<String> interfaces = out.ref(getStrategy().getJavaClassImplements(table, Mode.DAO));
         final String tableRecord = out.ref(getStrategy().getFullJavaClassName(table, Mode.RECORD));
@@ -2576,7 +2577,7 @@ public class JavaGenerator extends AbstractGenerator {
         String tType = (scala ? "Unit" : "Void");
         String pType = out.ref(getStrategy().getFullJavaClassName(table, Mode.POJO));
 
-        List<ColumnDefinition> keyColumns = key.getKeyColumns();
+        
         
         if (isKeyColumnsSizeOne) {
             tType = getJavaType(keyColumns.get(0).getType(resolver()), Mode.POJO);
@@ -3005,7 +3006,7 @@ public class JavaGenerator extends AbstractGenerator {
             final boolean isSizeUpperThanZero = (size > 0);
             if (isSizeUpperThanZero) {
                 List<String> nulls = new ArrayList<String>();
-                for (TypedElementDefinition<?> column : getTypedElements(tableOrUDT))
+                for (TypedElementDefinition<?> column : getTypedElements(tableOrUDT)) {
 
                     // Avoid ambiguities between a single-T-value constructor
                     // and the copy constructor
@@ -3018,11 +3019,12 @@ public class JavaGenerator extends AbstractGenerator {
                 out.tab(1).println("def this() = {", className);
                 out.tab(2).println("this([[%s]])", nulls);
                 out.tab(1).println("}");
+                }
             }
-        }
         else {
             out.tab(1).println("public %s() {}", className);
         }
+      }
     }
 
     /**

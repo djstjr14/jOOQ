@@ -21,13 +21,10 @@
  *
  *
  */
-package org.jooq.util;
+package org.jooq.codegen;
 
 
 import static org.jooq.tools.StringUtils.isBlank;
-import static org.jooq.util.AbstractGenerator.Language.JAVA;
-import static org.jooq.util.AbstractGenerator.Language.SCALA;
-import static org.jooq.util.AbstractGenerator.Language.XML;
 import static org.jooq.util.xml.jaxb.TableConstraintType.CHECK;
 import static org.jooq.util.xml.jaxb.TableConstraintType.FOREIGN_KEY;
 import static org.jooq.util.xml.jaxb.TableConstraintType.PRIMARY_KEY;
@@ -49,6 +46,23 @@ import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.JAXB;
 
 import org.jooq.SortOrder;
+import org.jooq.meta.AttributeDefinition;
+import org.jooq.meta.CatalogDefinition;
+import org.jooq.meta.CheckConstraintDefinition;
+import org.jooq.meta.ColumnDefinition;
+import org.jooq.meta.DataTypeDefinition;
+import org.jooq.meta.Database;
+import org.jooq.meta.Definition;
+import org.jooq.meta.ForeignKeyDefinition;
+import org.jooq.meta.IndexColumnDefinition;
+import org.jooq.meta.IndexDefinition;
+import org.jooq.meta.PackageDefinition;
+import org.jooq.meta.ParameterDefinition;
+import org.jooq.meta.RoutineDefinition;
+import org.jooq.meta.SchemaDefinition;
+import org.jooq.meta.SequenceDefinition;
+import org.jooq.meta.TableDefinition;
+import org.jooq.meta.UniqueKeyDefinition;
 import org.jooq.tools.JooqLogger;
 import org.jooq.tools.StopWatch;
 import org.jooq.tools.StringUtils;
@@ -81,7 +95,7 @@ import org.jooq.util.xml.jaxb.TableConstraint;
  *
  * @author Lukas Eder
  */
-public class LanguageGruop extends AbstractGenerator {
+public class LanguageGroup extends AbstractGenerator {
 	
     private static final JooqLogger               log                          = JooqLogger.getLogger(JavaGenerator.class);
 
@@ -153,10 +167,10 @@ public class LanguageGruop extends AbstractGenerator {
     
     
 	
-    LanguageGruop(Language language) { //JAVA or SCALA or XML
+    LanguageGroup(Language language) { //JAVA or SCALA or XML
         super(language);
 
-        this.scala = (language == SCALA);
+        this.scala = (language == Language.SCALA);
         this.tokenVoid = (scala ? "Unit" : "void");
     }
     
