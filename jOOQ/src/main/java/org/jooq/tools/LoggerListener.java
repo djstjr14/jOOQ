@@ -80,8 +80,21 @@ public class LoggerListener extends DefaultExecuteListener {
      */
     private static final long serialVersionUID = 7399239846062763212L;
 
-    private static final JooqLogger log   = JooqLogger.getLogger(LoggerListener.class);
 
+    private static JooqLogger log = Getlog();
+    
+    public static JooqLogger Getlog(){
+    	if(log == null){
+    		synchronized(LoggerListener.class){
+    			if(log == null){
+    	        	log = JooqLogger.getLogger(LoggerListener.class);
+    			}
+    		}
+        }
+		return log;
+    }
+    
+    
     @Override
     public void renderEnd(ExecuteContext ctx) {
         if (log.isDebugEnabled()) {
