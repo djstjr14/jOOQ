@@ -136,6 +136,7 @@ abstract class AbstractGenerator implements Generator {
         JAVA, SCALA, XML;
     }
 
+    
     void logDatabaseParameters(Database db) {
         String url = "";
         try {
