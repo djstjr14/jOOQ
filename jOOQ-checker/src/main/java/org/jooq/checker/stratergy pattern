@@ -1,0 +1,12 @@
+
+
+the classes in this package were not applied to strategy pattern
+this classes checks about annotation. if there are no annotations, it will return error msg.
+
+but the error msg and the ways of checking errors can be changed later.
+it violates OCP.
+
+So, I made interface to check the kinds of annotation error and divided class then
+made them inherit relations. this pattern is called strategy patterns.
+
+

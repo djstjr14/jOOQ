@@ -37,17 +37,7 @@
  */
 package org.jooq.checker;
 
-import static com.sun.source.util.TreePath.getPath;
-import static org.checkerframework.javacutil.TreeUtils.elementFromDeclaration;
-import static org.checkerframework.javacutil.TreeUtils.elementFromUse;
-import static org.checkerframework.javacutil.TreeUtils.enclosingMethod;
-
 import java.io.PrintWriter;
-
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-
-import org.jooq.Allow;
 import org.jooq.PlainSQL;
 
 import org.checkerframework.framework.source.SourceVisitor;
@@ -62,47 +52,27 @@ import com.sun.source.tree.MethodInvocationTree;
  */
 public class PlainSQLChecker extends AbstractChecker {
 
-    @Override
-    protected SourceVisitor<Void, Void> createSourceVisitor() {
-        return new SourceVisitor<Void, Void>(getChecker()) {
+	@Override
+	protected SourceVisitor<Void, Void> createSourceVisitor() {
+		return new SourceVisitor<Void, Void>(getChecker()) {
 
-            @Override
-            public Void visitMethodInvocation(MethodInvocationTree node, Void p) {
-                try {
-                    ExecutableElement elementFromUse = elementFromUse(node);
-                    PlainSQL plainSQL = elementFromUse.getAnnotation(PlainSQL.class);
-
-                    // In the absence of a @PlainSQL annotation,
-                    // all jOOQ API method calls will type check.
-                    if (plainSQL != null) {
-                        Element enclosing = elementFromDeclaration(enclosingMethod(getPath(root, node)));
-                        boolean allowed = false;
-
-                        moveUpEnclosingLoop:
-                        while (enclosing != null) {
-                            if (enclosing.getAnnotation(Allow.PlainSQL.class) != null) {
-                                allowed = true;
-                                break moveUpEnclosingLoop;
-                            }
-
-                            enclosing = enclosing.getEnclosingElement();
-                        }
-
-                        if (!allowed)
-                            error(node, "Plain SQL usage not allowed at current scope. Use @Allow.PlainSQL.");
-                    }
-                }
-                catch (final Exception e) {
-                    print(new Printer() {
-                        @Override
-                        public void print(PrintWriter t) {
-                            e.printStackTrace(t);
-                        }
-                    });
-                }
-
-                return super.visitMethodInvocation(node, p);
-            }
-        };
-    }
+			@Override
+			public Void visitMethodInvocation(MethodInvocationTree node, Void p) {
+				try {
+					String str=methodinvocation.checker(node, p, root); // 수
+					if (str!=null)
+						error(node, str);
+				}
+				catch (final Exception e) {
+					print(new Printer() {
+						@Override
+						public void print(PrintWriter t) {
+							e.printStackTrace(t);
+						}
+					});
+				}
+				return super.visitMethodInvocation(node, p);
+			}
+		};
+	}
 }
