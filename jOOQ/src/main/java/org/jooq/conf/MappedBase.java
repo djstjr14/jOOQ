@@ -19,7 +19,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  * so create superclass then, move common features to the superclass
 */
 
-public class MappedBase
+public abstract class MappedBase
 extends SettingsBase
 implements Serializable, Cloneable{
 
@@ -52,5 +52,27 @@ implements Serializable, Cloneable{
 	public void setOutput(String value) {
 		this.output = value;
 	}
-
+	
+	public String convertToStr() {
+		StringBuilder sb = new StringBuilder();
+		if (input!= null) {
+			sb.append("<input>");
+			sb.append(input);
+			sb.append("</input>");
+		}
+		if (inputExpression!= null) {
+			sb.append("<inputExpression>");
+			sb.append(inputExpression);
+			sb.append("</inputExpression>");
+		}
+		if (output!= null) {
+			sb.append("<output>");
+			sb.append(output);
+			sb.append("</output>");
+		}
+		sb.append(toString());
+		return sb.toString();
+	}
+	
+	abstract public String toString();
 }
