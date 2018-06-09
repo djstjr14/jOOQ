@@ -84,18 +84,15 @@ import org.jooq.Record;
  * @see MockConnection
  */
 public class MockStatement extends JDBC41Statement implements CallableStatement {
-
-    private final MockConnection        connection;
-
-    private final MockDataProvider      data;
     private final List<String>          sql;
     private final List<List<Object>>    bindings;
     private final List<Integer>         outParameterTypes;
-    private MockResult[]                result;
     private int                         resultIndex;
     private boolean                     resultWasNull;
     private boolean                     isClosed;
-
+    private Factory_jdbc				factory = new Factory_jdbc();
+    factory.create();
+    
     // Execution parameters
     int                                 resultSetType        = ResultSet.TYPE_FORWARD_ONLY;
     int                                 resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
@@ -149,7 +146,7 @@ public class MockStatement extends JDBC41Statement implements CallableStatement 
     }
 
     private void checkNotClosed() throws SQLException {
-        if (isClosed) {
+        if (isClosed()) {
             throw new SQLException("Connection is already closed");
         }
     }
