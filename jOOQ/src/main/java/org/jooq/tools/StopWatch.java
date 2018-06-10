@@ -179,38 +179,11 @@ public final class StopWatch {
         long s = seconds % 60L;
         long m = (seconds / 60L) % 60L;
         long h = (seconds / 3600L);
+        
+        StopWatchTime hour = TimeFactory.getTime(new HoursFactory(h));
+        StopWatchTime minute = TimeFactory.getTime(new MinutesFactory(m));
+        StopWatchTime second = TimeFactory.getTime(new SecondsFactory(s));
 
-        StringBuilder sb = new StringBuilder();
-
-        if (h == 0) {
-            // nop
-        }
-        else if (h < 10) {
-            sb.append("0");
-            sb.append(h);
-            sb.append(":");
-        }
-        else {
-            sb.append(h);
-            sb.append(":");
-        }
-
-        if (m < 10) {
-            sb.append("0");
-            sb.append(m);
-            sb.append(":");
-        } else {
-            sb.append(m);
-            sb.append(":");
-        }
-
-        if (s < 10) {
-            sb.append("0");
-            sb.append(s);
-        } else {
-            sb.append(s);
-        }
-
-        return sb.toString();
+        return hour.toString()+minute.toString()+second.toString();
     }
 }
