@@ -88,13 +88,9 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
             return null;
 
         // [#4540] Try finding a match by identity
-        for (Field<?> f : fields)
-            if (f == field)
-                return (Field<T>) f;
-
         // [#1802] Try finding an exact match (e.g. exact matching qualified name)
         for (Field<?> f : fields)
-            if (f.equals(field))
+            if (f == field || f.equals(field))
                 return (Field<T>) f;
 
         // [#4283] table / column matches are better than only column matches
@@ -232,7 +228,7 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
 
         return result;
     }
-
+    
     @Override
     public final Field<?>[] fields(String... f) {
         Field<?>[] result = new Field[f.length];
@@ -268,21 +264,19 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
 
         // Get an exact match, or a field with a similar name
         Field<?> compareWith = field(field);
-
+        final int NotInHere = -1;
+        
         if (compareWith != null) {
             int size = fields.length;
 
             // [#4540] Match by identity first
             for (int i = 0; i < size; i++)
-                if (fields[i] == compareWith)
+                if (fields[i] == compareWith || fields[i].equals(compareWith))
                     return i;
 
-            for (int i = 0; i < size; i++)
-                if (fields[i].equals(compareWith))
-                    return i;
         }
 
-        return -1;
+        return NotInHere;
     }
 
     @Override
@@ -349,17 +343,17 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
         return dataType(indexOrFail(this, fieldName));
     }
 
-    final int[] indexesOf(Field<?>... f) {
-        int[] result = new int[f.length];
+    final int[] indexesOf(Field<?>... fieldNames) {
+    	int[] result = new int[fieldNames.length];
 
-        for (int i = 0; i < f.length; i++) {
-            result[i] = indexOrFail(this, f[i]);
+        for (int i = 0; i < fieldNames.length; i++) {
+            result[i] = indexOrFail(this, fieldNames[i]);
         }
 
         return result;
     }
 
-    final int[] indexesOf(String... fieldNames) {
+	final int[] indexesOf(String... fieldNames) {
         int[] result = new int[fieldNames.length];
 
         for (int i = 0; i < fieldNames.length; i++) {

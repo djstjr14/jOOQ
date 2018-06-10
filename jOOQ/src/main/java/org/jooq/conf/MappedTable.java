@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.conf;
 
 import java.io.Serializable;
@@ -16,197 +9,124 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-
 /**
  * A table mapping configuration.
  *
  *
  *
  */
+
+
+/* - Extract Superclass : Move similar method and field with MappedSchemaclass to superclass
+ * - Self Encapsulate Field
+ * - Added methods that checks empty variable for better understandability
+ * */
+
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "MappedTable", propOrder = {
 
 })
 @SuppressWarnings({
-    "all"
+	"all"
 })
 public class MappedTable
-    extends SettingsBase
-    implements Serializable, Cloneable
-{
+extends MappedBase
+implements Serializable, Cloneable{
 
-    private final static long serialVersionUID = 31100L;
-    protected String input;
-    @XmlElement(type = String.class)
-    @XmlJavaTypeAdapter(RegexAdapter.class)
-    protected Pattern inputExpression;
-    @XmlElement(required = true)
-    protected String output;
+	public MappedTable withInput(String value) {
+		setInput(value);
+		return this;
+	}
 
-    /**
-     * The input table as defined in {@link org.jooq.Table#getName()}
-     * Either &lt;input/> or &lt;inputExpression/> must be provided.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
-    public String getInput() {
-        return input;
-    }
+	public MappedTable withInputExpression(Pattern value) {
+		setInputExpression(value);
+		return this;
+	}
 
-    /**
-     * Sets the value of the input property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
-    public void setInput(String value) {
-        this.input = value;
-    }
+	public MappedTable withOutput(String value) {
+		setOutput(value);
+		return this;
+	}
 
-    /**
-     * A regular expression matching the input table name as defined in {@link org.jooq.Table#getName()}
-     * Either &lt;input/> or &lt;inputExpression/> must be provided
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
-    public Pattern getInputExpression() {
-        return inputExpression;
-    }
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		System.out.println("MappedTable:toString Success");
+		return sb.toString();
+	}
 
-    /**
-     * Sets the value of the inputExpression property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
-    public void setInputExpression(Pattern value) {
-        this.inputExpression = value;
-    }
 
-    /**
-     * The output table as it will be rendered in SQL.
-     * <ul>
-     * <li>When &lt;input/> is provided, &lt;output/> is a constant value.</li>
-     * <li>When &lt;inputExpression/> is provided, &lt;output/> is a replacement expression.</li>
-     * </ul>
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
-    public String getOutput() {
-        return output;
-    }
+	/* CY
+	 * added method that checks empty variable for better understandability
+	 * */
+	public boolean isEmptyInput(MappedTable value) {
+		return value.getInput()== null;
+	}
 
-    /**
-     * Sets the value of the output property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
-    public void setOutput(String value) {
-        this.output = value;
-    }
+	public boolean isEmptyOutput(MappedTable value) {
+		return value.getOutput()== null;
+	}
 
-    public MappedTable withInput(String value) {
-        setInput(value);
-        return this;
-    }
+	public boolean isEmptyInputExpression(MappedTable value) {
+		return value.getInputExpression()== null;
+	}
 
-    public MappedTable withInputExpression(Pattern value) {
-        setInputExpression(value);
-        return this;
-    }
 
-    public MappedTable withOutput(String value) {
-        setOutput(value);
-        return this;
-    }
+	@Override
+	public boolean equals(Object that) {
+		if (this == that) {
+			return true;
+		}
+		if (that == null) {
+			return false;
+		}
+		if (getClass()!= that.getClass()) {
+			return false;
+		}
+		MappedTable other = ((MappedTable) that);
+		
+		/* 
+		 * this.input -> this.getInput()
+		 * Self Encapsulate Field for making coupling weaker
+		 */
+		if (isEmptyInput(this)) {
+			if (!isEmptyInput(other)) { 
+				return false;
+			}
+		} else {
+			if (!input.equals(other.input)) {
+				return false;
+			}
+		}
+		if (isEmptyInputExpression(this)) {
+			if (!isEmptyInputExpression(other)) {
+				return false;
+			}
+		} else {
+			if (!getInputExpression().equals(other.getInputExpression())) {
+				return false;
+			}
+		}
+		if (isEmptyOutput(this)) {
+			if (!isEmptyOutput(other)) {
+				return false;
+			}
+		} else {
+			if (!getOutput().equals(other.getOutput())) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (input!= null) {
-            sb.append("<input>");
-            sb.append(input);
-            sb.append("</input>");
-        }
-        if (inputExpression!= null) {
-            sb.append("<inputExpression>");
-            sb.append(inputExpression);
-            sb.append("</inputExpression>");
-        }
-        if (output!= null) {
-            sb.append("<output>");
-            sb.append(output);
-            sb.append("</output>");
-        }
-        return sb.toString();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-        if (this == that) {
-            return true;
-        }
-        if (that == null) {
-            return false;
-        }
-        if (getClass()!= that.getClass()) {
-            return false;
-        }
-        MappedTable other = ((MappedTable) that);
-        if (input == null) {
-            if (other.input!= null) {
-                return false;
-            }
-        } else {
-            if (!input.equals(other.input)) {
-                return false;
-            }
-        }
-        if (inputExpression == null) {
-            if (other.inputExpression!= null) {
-                return false;
-            }
-        } else {
-            if (!inputExpression.equals(other.inputExpression)) {
-                return false;
-            }
-        }
-        if (output == null) {
-            if (other.output!= null) {
-                return false;
-            }
-        } else {
-            if (!output.equals(other.output)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = ((prime*result)+((input == null)? 0 :input.hashCode()));
-        result = ((prime*result)+((inputExpression == null)? 0 :inputExpression.hashCode()));
-        result = ((prime*result)+((output == null)? 0 :output.hashCode()));
-        return result;
-    }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = ((prime*result)+((input == null)? 0 :input.hashCode()));
+		result = ((prime*result)+((inputExpression == null)? 0 :inputExpression.hashCode()));
+		result = ((prime*result)+((output == null)? 0 :output.hashCode()));
+		return result;
+	}
 
 }

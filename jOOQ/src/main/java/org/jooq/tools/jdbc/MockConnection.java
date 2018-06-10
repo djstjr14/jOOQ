@@ -101,7 +101,7 @@ public class MockConnection extends JDBC41Connection implements Connection {
     // -------------------------------------------------------------------------
 
     private void checkNotClosed() throws SQLException {
-        if (isClosed) {
+        if (isClosed()) {
             throw new SQLException("Connection is already closed");
         }
     }

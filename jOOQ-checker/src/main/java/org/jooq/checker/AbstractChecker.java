@@ -50,7 +50,12 @@ import org.checkerframework.framework.source.SourceChecker;
  * @author Lukas Eder
  */
 abstract class AbstractChecker extends SourceChecker {
-
+	MethodInvocation methodinvocation;
+	
+	void setMethodInvocation(MethodInvocation methodinvocation) {
+		this.methodinvocation=methodinvocation;
+	}
+	
     void error(Object node, String message) {
         getChecker().report(Result.failure(message, node), node);
     }
@@ -58,7 +63,7 @@ abstract class AbstractChecker extends SourceChecker {
     void warn(Object node, String message) {
         getChecker().report(Result.warning(message, node), node);
     }
-
+    
     void print(Printer printer) {
         try (PrintWriter writer = new PrintWriter(new FileWriter("error.txt"))){
             writer.println("This is probably a bug in jOOQ-checker.");

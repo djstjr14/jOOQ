@@ -51,6 +51,7 @@ import org.jooq.meta.Database;
  */
 public interface Generator {
 
+	
     /**
      * Do the code generation
      */

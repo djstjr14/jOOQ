@@ -41,18 +41,20 @@ import java.util.regex.Pattern;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
+import junit.framework.Assert;
+
 /**
  * @author Lukas Eder
  */
 public class RegexAdapter extends XmlAdapter<String, Pattern> {
 
     @Override
-    public Pattern unmarshal(String v) throws Exception {
-        return v == null ? null : Pattern.compile(v);
+    public Pattern unmarshal(String value) throws Exception {
+        return value == null ? null : Pattern.compile(value);
     }
 
     @Override
-    public String marshal(Pattern v) throws Exception {
-        return v == null ? null : v.pattern();
+    public String marshal(Pattern value) throws Exception {
+        return value == null ? null : value.pattern();
     }
 }
